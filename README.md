@@ -6,21 +6,30 @@ So this is how to install it and use it;
 
 Copy and paste the code into a file called kidtimer.install.
 
-Execute it: sudo ./kidtimer.install
+Execute it: 
+<pre>
+sudo ./kidtimer.install
+</pre>
 
-Run it: 
- sudo kidtimer
+Run it:
+<pre>
+sudo kidtimer
+</pre>
 
 Setup a existing user account.
 
 Done.
 
 For help:
-
+<pre>
 sudo kidtimer help
-Add time to a user's account:
+</pre>
 
+Add time to a user's account:
+<pre>
 sudo kidtimer addtime <minutes>
+</pre>
+
 Features:
 
 Allow your kid specific hours of the day to access the computer, both weekday and weekend.
