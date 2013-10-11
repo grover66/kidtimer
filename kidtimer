@@ -1,0 +1,368 @@
+#!/bin/bash
+# Restrict kids computer access to specific hours and total time.
+# By: Michael Groves - grover66_at_gmail_dot_com
+
+#variables
+basedir="/usr/local/kidtimer"
+configdir="/etc/kidtimer"
+Cdate=`/bin/date | awk '{ print $2" "$3 }'`
+TUI=0
+HOUR=`/bin/date +%H`
+DOW=`/bin/date +%u`
+
+#arguments
+[ $# -eq 0 ] && TUI=1
+[ $# -eq 1 ] && COMMAND=$1
+[ $# -eq 2 ] && COMMAND=$1 && KID=$2
+[ $# -eq 3 ] && COMMAND=$1 && KID=$2 && Time=$3
+
+################# Subroutines ##################
+################################################
+
+go_check_install () {
+if [ ! -e $basedir ]; then
+	go_initialize
+fi
+}
+
+
+go_initialize () {
+/bin/mkdir -p $basedir/time
+/bin/mkdir -p $basedir/schedule
+/bin/cp $0 /usr/local/bin/kidtimer && chmod +x /usr/local/bin/kidtimer
+echo "0 * * * *		root	/usr/local/bin/kidtimer hourly" > /etc/cron.d/kidtimer
+echo "0 0 * * *		root	/usr/local/bin/kidtimer daily" >> /etc/cron.d/kidtimer
+echo "* * * * *		root	/usr/local/bin/kidtimer check" >> /etc/cron.d/kidtimer
+echo "@reboot		root	/usr/local/bin/kidtimer daily" >> /etc/cron.d/kidtimer
+echo "@reboot		root	/usr/local/bin/kidtimer hourly" >> /etc/cron.d/kidtimer
+/bin/mkdir $configdir
+/usr/bin/touch $configdir/kid.list
+go_create_message_files
+echo "Kidtimer is now installed. Run /usr/local/bin/kidtimer to configure."
+}
+
+
+go_create_message_files () {
+cat << EOF > $basedir/send5.sh
+#!/bin/bash
+Name=\$1
+/bin/su -s /bin/bash -c 'DISPLAY=:0 /usr/bin/notify-send -i \
+	/usr/share/pixmaps/gnome-set-time.png "ALERT" \
+	"You will be logged out in 5 minutes."' \$Name
+EOF
+chmod +x $basedir/send5.sh
+cat << EOF > $basedir/send4.sh
+#!/bin/bash
+Name=\$1
+/bin/su -s /bin/bash -c 'DISPLAY=:0 /usr/bin/notify-send -i \
+        /usr/share/pixmaps/gnome-set-time.png "ALERT" \
+        "You will be logged out in 4 minutes."' \$Name
+EOF
+chmod +x $basedir/send4.sh
+cat << EOF > $basedir/send3.sh
+#!/bin/bash
+Name=\$1
+/bin/su -s /bin/bash -c 'DISPLAY=:0 /usr/bin/notify-send -i \
+        /usr/share/pixmaps/gnome-set-time.png "ALERT" \
+        "You will be logged out in 3 minutes."' \$Name
+EOF
+chmod +x $basedir/send3.sh
+cat << EOF > $basedir/send2.sh
+#!/bin/bash
+Name=$1
+/bin/su -s /bin/bash -c 'DISPLAY=:0 /usr/bin/notify-send -i \
+        /usr/share/pixmaps/gnome-set-time.png "ALERT" \
+        "You will be logged out in 2 minutes."' \$Name
+EOF
+chmod +x $basedir/send2.sh
+cat << EOF > $basedir/send1.sh
+#!/bin/bash
+Name=\$1
+/bin/su -s /bin/bash -c 'DISPLAY=:0 /usr/bin/notify-send -i \
+        /usr/share/pixmaps/gnome-set-time.png "ALERT" \
+        "You will be logged out in 1 minute."' \$Name
+EOF
+chmod +x $basedir/send1.sh
+cat << EOF > $basedir/logout.sh
+#!/bin/bash
+Name=\$1
+/usr/bin/pkill -KILL -u \$Name
+rm -rf /tmp/kidtimer.shutdown.\$Name
+EOF
+chmod +x $basedir/logout.sh
+cat << EOF > $basedir/schedule/blank
+#hour weekday weekend (y/n)
+00 n n
+01 n n
+02 n n
+03 n n
+04 n n
+05 n n
+06 n n
+07 n n
+08 y y
+09 y y
+10 y y
+11 y y
+12 y y
+13 y y
+14 y y
+15 y y
+16 y y
+17 y y
+18 y y
+19 y y
+20 n n
+21 n n
+22 n n
+23 n n
+#minutes weekday weekend
+MAX 120 240
+EOF
+}
+
+
+go_check () {
+for I in `cat $configdir/kid.list`; do
+        /usr/bin/users | grep -q $I
+        if [ $? -eq 0 ]; then
+                if [ -e $basedir/time/$I.ttl ]; then
+                        C=`cat $basedir/time/$I.ttl`
+                        C=$((C + 1))
+                        echo $C > $basedir/time/$I.ttl
+                else
+                        echo 1 > $basedir/time/$I.ttl
+                        C=1
+                fi
+        else
+		go_clean_jobs $I
+		exit 0
+	fi
+        # check total time.
+        W="no"
+        [ $DOW -eq 6 ] && W="yes"
+        [ $DOW -eq 7 ] && W="yes"
+        [ "$W" == "no" ] && TIME_LIMIT=`cat $basedir/schedule/$I | grep ^MAX | awk '{ print $2 }'`
+        [ "$W" == "yes" ] && TIME_LIMIT=`cat $basedir/schedule/$I | grep ^MAX | awk '{ print $3 }'`
+        if [ $C -ge $TIME_LIMIT ]; then
+                if [ ! -e /tmp/kidtimer.shutdown.$I ]; then
+                        /usr/bin/passwd $I -l
+                        go_logout $I
+                fi
+        fi
+done
+}
+
+
+go_clean_jobs () {
+K=$1
+for I in `/usr/bin/atq | awk '{ print $1 }' | sort`; do
+	/usr/bin/at -c $I | grep kidtimer | grep -q $K
+	[ $? -eq 0 ] && /usr/bin/at -d $I
+done
+[ -e /tmp/kidtimer.shutdown.$K ] && rm -rf /tmp/kidtimer.shutdown.$K
+}
+
+
+go_daily () {
+for I in `cat $configdir/kid.list`; do
+	ls -l $basedir/time/$I.ttl | grep -q "$Cdate"
+	if [ ! $? -eq 0 ]; then
+		echo "0" > $basedir/time/$I.ttl
+	fi
+done
+}
+
+
+go_hourly () {
+if [ -s $configdir/kid.list ]; then
+	for I in `cat $configdir/kid.list`; do
+		if [ -e $basedir/time/$I ]; then
+			[ "$WEEKEND" == "no" ] && TL=`cat $basedir/schedule/$I | grep ^MAX | awk '{ print $2 }'`
+			[ "$WEEKEND" == "yes" ] && TL=`cat $basedir/schedule/$I | grep ^MAX | awk '{ print $3 }'`
+			[ -e $basedir/time/$I.ttl ] && C=`cat $basedir/time/$I.ttl`
+			[ $C -ge $TL ] && /usr/bin/passwd $I -l && exit 0
+			[ "$WEEKEND" == "no" ] && R=`grep ^$HOUR $basedir/schedule/$I | awk '{ print $2 }'`
+			[ "$WEEKEND" == "yes" ] && R=`grep ^$HOUR $basedir/schedule/$I | awk '{ print $3 }'`
+			if [ "$R" == "y" ]; then
+				/usr/bin/passwd $I -u
+			else
+				/usr/bin/passwd $I -l
+				/usr/bin/users | grep -q $I && /usr/local/bin/kidtimer shutdown $I
+			fi
+		fi
+	done
+fi
+}
+
+
+go_logout () {
+K=$1
+echo "$basedir/send5.sh $K" | at now + 1 minutes
+echo "$basedir/send4.sh $K" | at now + 2 minutes
+echo "$basedir/send3.sh $K" | at now + 3 minutes
+echo "$basedir/send2.sh $K" | at now + 4 minutes
+echo "$basedir/send1.sh $K" | at now + 5 minutes
+echo "$basedir/logout.sh $K" | at now + 6 minutes
+touch /tmp/kidtimer.shutdown.$K
+}
+
+
+go_addtime () {
+U=$KID
+A=$Time
+if [ "$KID" == "reset" ]; then
+	echo "0" > $basedir/time/$U.ttl
+	echo "Done."
+	exit 0
+elif [ "$KID" == "" ]; then
+	echo "Error."
+	echo "Syntax: addtime <user> <minutes|reset>"
+	exit 1
+else	
+	C=`cat $basedir/time/$KID.ttl`
+	C=$((C - Time))
+	echo $C > $basedir/time/$KID.ttl
+	echo "New total minutes is "$C"."
+	echo "Done."
+fi
+
+/usr/bin/passwd $KID -u
+}
+
+
+go_tui () {
+go_command_list
+echo -n "Choose: "; read -e X
+case "$X" in
+1) go_setup_user
+        ;;
+2) go_modify_user
+        ;;
+3) go_remove_user
+        ;;
+4) go_list_users
+	;;
+5) exit 0
+        ;;
+esac
+go_tui
+}
+
+
+go_command_list () {
+echo
+echo "1) Setup user limits."
+echo "2) Modify user limits."
+echo "3) Remove user limits."
+echo "4) List configured users."
+echo "5) Quit."
+echo
+}
+
+
+go_list_users () {
+echo
+echo "Users configured for kidtimer:"
+if [ -s $configdir/kid.list ]; then
+	cat $configdir/kid.list
+else
+	echo "No configured users."
+fi
+}
+
+go_setup_user () {
+echo
+echo -n "Username: "; read -e U
+/usr/bin/id $U > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+	/bin/cp $basedir/schedule/blank $basedir/schedule/$U
+	echo "0" > $basedir/time/$U.ttl
+	echo $U >> $configdir/kid.list
+	echo "Done."
+	echo
+	echo -n "Modify limits now ?(y/n): "; read -e M
+	if [ "$M" == "y" ]; then
+		if [ -e /usr/bin/nano ]; then
+        	        /usr/bin/nano $basedir/schedule/$U
+        	        echo "Done."
+	        else
+        	        /usr/bin/vi $basedir/schedule/$U
+        	        echo "Done."
+        	fi
+	fi
+else
+	echo "Error. User does not exist. Please create user using the useradd command first."
+fi
+}
+
+
+go_modify_user () {
+echo
+echo -n "Username: "; read -e U
+grep -q ^$U $configdir/kid.list
+if [ $? -eq 0 ]; then
+	if [ -e /usr/bin/nano ]; then
+		/usr/bin/nano $basedir/schedule/$U
+		echo "Done."
+	else
+		/usr/bin/vi $basedir/schedule/$U
+		echo "Done."
+	fi
+else
+	echo "Error. User not setup. Please setup user first."
+fi
+}
+
+
+go_remove_user () {
+echo
+echo -n "Username: "; read -e U
+grep -q ^$U $configdir/kid.list
+if [ $? -eq 0 ]; then
+	grep -v ^$U $configdir/kid.list > /tmp/kidtimer.tmp
+	cat /tmp/kidtimer.tmp > $configdir/kid.list
+	echo "Done."
+else
+	echo "Error. User is not setup."
+fi
+}
+
+
+go_help () {
+echo
+echo "Commands:"
+echo "--------------------------------------------------------------------------------"
+echo "addtime <user> <minutes> ... Increases allowed time for the day."
+echo "logout <user>            ... Starts logout sequence for user."
+echo "hourly                   ... Enables/disables user access based on the schedule."
+echo "daily                    ... Resets time for the new day."
+echo "help                     ... This list."
+echo "--------------------------------------------------------------------------------"
+}
+
+###################### Code ####################
+################################################
+
+go_check_install
+[ $TUI -eq 1 ] && go_tui
+
+case "$COMMAND" in
+addtime) go_addtime
+	;;
+logout) go_logout $KID
+	;;
+initialize) go_initialize
+	;;
+hourly) go_hourly
+	;;
+daily) go_daily
+	;;
+check)	go_check
+	;;
+-h) go_help
+	;;
+help) go_help
+	;;
+esac
+exit 0
