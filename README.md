@@ -9,7 +9,7 @@ Copy and paste the code into a file called kidtimer.install.
 Execute it: sudo ./kidtimer.install
 
 Run it: 
-sudo kidtimer
+ sudo kidtimer
 
 Setup a existing user account.
 
