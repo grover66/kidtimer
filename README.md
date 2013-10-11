@@ -28,12 +28,14 @@ Allow your kid specific hours of the day to access the computer, both weekday an
 Set maximum amount of time, both weekday and weekend.
 
 Key files:
-
+<pre>
 /etc/kidtimer/kid.list
 /etc/cron.d/kidtimer
 /usr/local/kidtimer/schedule/<user>
 /usr/local/kidtimer/time/<user>.ttl
 /usr/local/bin/kidtimer
+</pre>
+
 Cronjobs:
 
 Check every minute to see if user is logged in. If so, increment total time. If hit max time, disable account and start logoff sequence (5 mins total).
