@@ -9,6 +9,9 @@ Cdate=`/bin/date | awk '{ print $2" "$3 }'`
 TUI=0
 HOUR=`/bin/date +%H`
 DOW=`/bin/date +%u`
+WEEKEND="no"
+[ "$DOW" == "6" ] && WEEKEND="yes"
+[ "$DOW" == "7" ] && WEEKEND="yes"
 
 #arguments
 [ $# -eq 0 ] && TUI=1
@@ -177,7 +180,7 @@ done
 go_hourly () {
 if [ -s $configdir/kid.list ]; then
 	for I in `cat $configdir/kid.list`; do
-		if [ -e $basedir/time/$I ]; then
+		if [ -e $basedir/schedule/$I ]; then
 			[ "$WEEKEND" == "no" ] && TL=`cat $basedir/schedule/$I | grep ^MAX | awk '{ print $2 }'`
 			[ "$WEEKEND" == "yes" ] && TL=`cat $basedir/schedule/$I | grep ^MAX | awk '{ print $3 }'`
 			[ -e $basedir/time/$I.ttl ] && C=`cat $basedir/time/$I.ttl`
