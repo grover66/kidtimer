@@ -25,9 +25,9 @@ For help:
 sudo kidtimer help
 </pre>
 
-Add time to a user's account:
+Add time to a user's account (for that day only):
 <pre>
-sudo kidtimer addtime <minutes>
+sudo kidtimer addtime <user> <minutes>
 </pre>
 
 Features:
