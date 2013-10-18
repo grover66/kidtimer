@@ -27,7 +27,7 @@ sudo kidtimer help
 
 Add time to a user's account (for that day only):
 <pre>
-sudo kidtimer addtime <user> <minutes>
+sudo kidtimer addtime <user> <minutes> 
 </pre>
 
 Features:
