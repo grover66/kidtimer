@@ -231,6 +231,7 @@ else
 fi
 
 /usr/bin/passwd $KID -u
+go_clean_jobs $KID
 }
 
 
