@@ -148,9 +148,8 @@ for I in `cat $configdir/kid.list`; do
                 go_clean_jobs $I
                 exit 0
         fi
-        # check total time.
-	get_ttl_time
-        if [ $C -ge $TIME_LIMIT ]; then
+        # check time
+        if [ $C -le 0 ]; then
                 if [ ! -e /tmp/kidtimer.shutdown.$I ]; then
                         /usr/bin/passwd $I -l
                         go_logout $I
