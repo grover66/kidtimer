@@ -24,20 +24,26 @@ WEEKEND="no"
 
 go_check_install () {
 if [ ! -e $basedir ]; then
-	go_initialize
+        go_initialize
 fi
 }
 
 
 go_initialize () {
+/usr/bin/dpkg -l at >/dev/null
+if [ $? -eq 1 ]; then
+	echo "Package:\"at\" is required. Please run;"
+	echo "sudo apt-get install at"
+	exit 1
+fi
 /bin/mkdir -p $basedir/time
 /bin/mkdir -p $basedir/schedule
 /bin/cp $0 /usr/local/bin/kidtimer && chmod +x /usr/local/bin/kidtimer
-echo "0 * * * *		root	/usr/local/bin/kidtimer hourly" > /etc/cron.d/kidtimer
-echo "0 0 * * *		root	/usr/local/bin/kidtimer daily" >> /etc/cron.d/kidtimer
-echo "* * * * *		root	/usr/local/bin/kidtimer check" >> /etc/cron.d/kidtimer
-echo "@reboot		root	/usr/local/bin/kidtimer daily" >> /etc/cron.d/kidtimer
-echo "@reboot		root	/usr/local/bin/kidtimer hourly" >> /etc/cron.d/kidtimer
+echo "0 * * * *                root        /usr/local/bin/kidtimer hourly" > /etc/cron.d/kidtimer
+echo "0 0 * * *                root        /usr/local/bin/kidtimer daily" >> /etc/cron.d/kidtimer
+echo "* * * * *                root        /usr/local/bin/kidtimer check" >> /etc/cron.d/kidtimer
+echo "@reboot                root        /usr/local/bin/kidtimer daily" >> /etc/cron.d/kidtimer
+echo "@reboot                root        /usr/local/bin/kidtimer hourly" >> /etc/cron.d/kidtimer
 /bin/mkdir $configdir
 /usr/bin/touch $configdir/kid.list
 go_create_message_files
@@ -50,8 +56,8 @@ cat << EOF > $basedir/send5.sh
 #!/bin/bash
 Name=\$1
 /bin/su -s /bin/bash -c 'DISPLAY=:0 /usr/bin/notify-send -i \
-	/usr/share/pixmaps/gnome-set-time.png "ALERT" \
-	"You will be logged out in 5 minutes."' \$Name
+        /usr/share/pixmaps/gnome-set-time.png "ALERT" \
+        "You will be logged out in 5 minutes."' \$Name
 EOF
 chmod +x $basedir/send5.sh
 cat << EOF > $basedir/send4.sh
@@ -131,22 +137,19 @@ for I in `cat $configdir/kid.list`; do
         if [ $? -eq 0 ]; then
                 if [ -e $basedir/time/$I.ttl ]; then
                         C=`cat $basedir/time/$I.ttl`
-                        C=$((C + 1))
+                        C=$((C - 1))
                         echo $C > $basedir/time/$I.ttl
                 else
-                        echo 1 > $basedir/time/$I.ttl
-                        C=1
+			get_ttl_time 
+			echo $TIME_LIMIT > $basedir/time/$I.ttl
+                        C=$TIME_LIMIT
                 fi
         else
-		go_clean_jobs $I
-		exit 0
-	fi
+                go_clean_jobs $I
+                exit 0
+        fi
         # check total time.
-        W="no"
-        [ $DOW -eq 6 ] && W="yes"
-        [ $DOW -eq 7 ] && W="yes"
-        [ "$W" == "no" ] && TIME_LIMIT=`cat $basedir/schedule/$I | grep ^MAX | awk '{ print $2 }'`
-        [ "$W" == "yes" ] && TIME_LIMIT=`cat $basedir/schedule/$I | grep ^MAX | awk '{ print $3 }'`
+	get_ttl_time
         if [ $C -ge $TIME_LIMIT ]; then
                 if [ ! -e /tmp/kidtimer.shutdown.$I ]; then
                         /usr/bin/passwd $I -l
@@ -157,11 +160,17 @@ done
 }
 
 
+get_ttl_time () {
+        [ "$WEEKEND" == "no" ] && TIME_LIMIT=`cat $basedir/schedule/$I | grep ^MAX | awk '{ print $2 }'`
+        [ "$WEEKEND" == "yes" ] && TIME_LIMIT=`cat $basedir/schedule/$I | grep ^MAX | awk '{ print $3 }'`
+}
+
+
 go_clean_jobs () {
 K=$1
 for I in `/usr/bin/atq | awk '{ print $1 }' | sort`; do
-	/usr/bin/at -c $I | grep kidtimer | grep -q $K
-	[ $? -eq 0 ] && /usr/bin/at -d $I
+        /usr/bin/at -c $I | grep kidtimer | grep -q $K
+        [ $? -eq 0 ] && /usr/bin/at -d $I
 done
 [ -e /tmp/kidtimer.shutdown.$K ] && rm -rf /tmp/kidtimer.shutdown.$K
 }
@@ -169,32 +178,31 @@ done
 
 go_daily () {
 for I in `cat $configdir/kid.list`; do
-	ls -l $basedir/time/$I.ttl | grep -q "$Cdate"
-	if [ ! $? -eq 0 ]; then
-		echo "0" > $basedir/time/$I.ttl
-	fi
+        ls -l $basedir/time/$I.ttl | grep -q "$Cdate"
+        if [ ! $? -eq 0 ]; then
+		get_ttl_time
+                echo $TIME_LIMIT > $basedir/time/$I.ttl
+        fi
 done
 }
 
 
 go_hourly () {
 if [ -s $configdir/kid.list ]; then
-	for I in `cat $configdir/kid.list`; do
-		if [ -e $basedir/schedule/$I ]; then
-			[ "$WEEKEND" == "no" ] && TL=`cat $basedir/schedule/$I | grep ^MAX | awk '{ print $2 }'`
-			[ "$WEEKEND" == "yes" ] && TL=`cat $basedir/schedule/$I | grep ^MAX | awk '{ print $3 }'`
-			[ -e $basedir/time/$I.ttl ] && C=`cat $basedir/time/$I.ttl`
-			[ $C -ge $TL ] && /usr/bin/passwd $I -l && exit 0
-			[ "$WEEKEND" == "no" ] && R=`grep ^$HOUR $basedir/schedule/$I | awk '{ print $2 }'`
-			[ "$WEEKEND" == "yes" ] && R=`grep ^$HOUR $basedir/schedule/$I | awk '{ print $3 }'`
-			if [ "$R" == "y" ]; then
-				/usr/bin/passwd $I -u
-			else
-				/usr/bin/passwd $I -l
-				/usr/bin/users | grep -q $I && /usr/local/bin/kidtimer shutdown $I
-			fi
-		fi
-	done
+        for I in `cat $configdir/kid.list`; do
+                if [ -e $basedir/schedule/$I ]; then
+                        [ -e $basedir/time/$I.ttl ] && C=`cat $basedir/time/$I.ttl`
+                        [ $C -eq 0 ] && /usr/bin/passwd $I -l && exit 0
+                        [ "$WEEKEND" == "no" ] && R=`grep ^$HOUR $basedir/schedule/$I | awk '{ print $2 }'`
+                        [ "$WEEKEND" == "yes" ] && R=`grep ^$HOUR $basedir/schedule/$I | awk '{ print $3 }'`
+                        if [ "$R" == "y" ]; then
+                                /usr/bin/passwd $I -u
+                        else
+                                /usr/bin/passwd $I -l
+                                /usr/bin/users | grep -q $I && /usr/local/bin/kidtimer shutdown $I
+                        fi
+                fi
+        done
 fi
 }
 
@@ -215,23 +223,27 @@ go_addtime () {
 U=$KID
 A=$Time
 if [ "$KID" == "reset" ]; then
-	echo "0" > $basedir/time/$U.ttl
-	echo "Done."
-	exit 0
+        echo "0" > $basedir/time/$U.ttl
+        echo "Done."
+        exit 0
 elif [ "$KID" == "" ]; then
-	echo "Error."
-	echo "Syntax: addtime <user> <minutes|reset>"
-	exit 1
-else	
-	C=`cat $basedir/time/$KID.ttl`
-	C=$((C - Time))
-	echo $C > $basedir/time/$KID.ttl
-	echo "New total minutes is "$C"."
-	echo "Done."
+        echo "Error."
+        echo "Syntax: addtime <user> <minutes|reset>"
+        exit 1
+else        
+        C=`cat $basedir/time/$KID.ttl`
+        C=$((C + Time))
+        echo $C > $basedir/time/$KID.ttl
+	get_time 
 fi
 
 /usr/bin/passwd $KID -u
 go_clean_jobs $KID
+}
+
+
+get_time () {
+cat $basedir/time/$KID.ttl
 }
 
 
@@ -246,7 +258,7 @@ case "$X" in
 3) go_remove_user
         ;;
 4) go_list_users
-	;;
+        ;;
 5) exit 0
         ;;
 esac
@@ -269,9 +281,9 @@ go_list_users () {
 echo
 echo "Users configured for kidtimer:"
 if [ -s $configdir/kid.list ]; then
-	cat $configdir/kid.list
+        cat $configdir/kid.list
 else
-	echo "No configured users."
+        echo "No configured users."
 fi
 }
 
@@ -280,23 +292,23 @@ echo
 echo -n "Username: "; read -e U
 /usr/bin/id $U > /dev/null 2>&1
 if [ $? -eq 0 ]; then
-	/bin/cp $basedir/schedule/blank $basedir/schedule/$U
-	echo "0" > $basedir/time/$U.ttl
-	echo $U >> $configdir/kid.list
-	echo "Done."
-	echo
-	echo -n "Modify limits now ?(y/n): "; read -e M
-	if [ "$M" == "y" ]; then
-		if [ -e /usr/bin/nano ]; then
-        	        /usr/bin/nano $basedir/schedule/$U
-        	        echo "Done."
-	        else
-        	        /usr/bin/vi $basedir/schedule/$U
-        	        echo "Done."
-        	fi
-	fi
+        /bin/cp $basedir/schedule/blank $basedir/schedule/$U
+        echo "0" > $basedir/time/$U.ttl
+        echo $U >> $configdir/kid.list
+        echo "Done."
+        echo
+        echo -n "Modify limits now ?(y/n): "; read -e M
+        if [ "$M" == "y" ]; then
+                if [ -e /usr/bin/nano ]; then
+                 /usr/bin/nano $basedir/schedule/$U
+                 echo "Done."
+         else
+                 /usr/bin/vi $basedir/schedule/$U
+                 echo "Done."
+                fi
+        fi
 else
-	echo "Error. User does not exist. Please create user using the useradd command first."
+        echo "Error. User does not exist. Please create user using the useradd command first."
 fi
 }
 
@@ -306,15 +318,15 @@ echo
 echo -n "Username: "; read -e U
 grep -q ^$U $configdir/kid.list
 if [ $? -eq 0 ]; then
-	if [ -e /usr/bin/nano ]; then
-		/usr/bin/nano $basedir/schedule/$U
-		echo "Done."
-	else
-		/usr/bin/vi $basedir/schedule/$U
-		echo "Done."
-	fi
+        if [ -e /usr/bin/nano ]; then
+                /usr/bin/nano $basedir/schedule/$U
+                echo "Done."
+        else
+                /usr/bin/vi $basedir/schedule/$U
+                echo "Done."
+        fi
 else
-	echo "Error. User not setup. Please setup user first."
+        echo "Error. User not setup. Please setup user first."
 fi
 }
 
@@ -324,24 +336,39 @@ echo
 echo -n "Username: "; read -e U
 grep -q ^$U $configdir/kid.list
 if [ $? -eq 0 ]; then
-	grep -v ^$U $configdir/kid.list > /tmp/kidtimer.tmp
-	cat /tmp/kidtimer.tmp > $configdir/kid.list
-	echo "Done."
+        grep -v ^$U $configdir/kid.list > /tmp/kidtimer.tmp
+        cat /tmp/kidtimer.tmp > $configdir/kid.list
+        echo "Done."
 else
-	echo "Error. User is not setup."
+        echo "Error. User is not setup."
 fi
 }
 
+
+get_update () {
+if [ -e /usr/bin/curl ]; then
+	curl -o- https://raw.github.com/grover66/kidtimer/master/kidtimer > /usr/local/bin/kidtimer
+	if [ $? -eq 0 ]; then
+		echo "/usr/local/bin/kidtimer has been updated from http://github.com/grover66/kidtimer."
+	else
+		echo "Error. Download from http://github.com/grover66/kidtimer failed."
+	fi
+else
+	echo "Error. Curl is not installed. Please run;"
+	echo "sudo apt-get install curl"
+fi
+}
 
 go_help () {
 echo
 echo "Commands:"
 echo "--------------------------------------------------------------------------------"
 echo "addtime <user> <minutes> ... Increases allowed time for the day."
-echo "logout <user>            ... Starts logout sequence for user."
-echo "hourly                   ... Enables/disables user access based on the schedule."
-echo "daily                    ... Resets time for the new day."
-echo "help                     ... This list."
+echo "gettime <user> ... Increases allowed time for the day."
+echo "logout <user> ... Starts logout sequence for user."
+echo "hourly ... Enables/disables user access based on the schedule."
+echo "daily ... Resets time for the new day."
+echo "help ... This list."
 echo "--------------------------------------------------------------------------------"
 }
 
@@ -353,20 +380,24 @@ go_check_install
 
 case "$COMMAND" in
 addtime) go_addtime
-	;;
+        ;;
+gettime) get_time
+        ;;
+update) get_update
+        ;;
 logout) go_logout $KID
-	;;
+        ;;
 initialize) go_initialize
-	;;
+        ;;
 hourly) go_hourly
-	;;
+        ;;
 daily) go_daily
-	;;
-check)	go_check
-	;;
+        ;;
+check)        go_check
+        ;;
 -h) go_help
-	;;
+        ;;
 help) go_help
-	;;
+        ;;
 esac
 exit 0
