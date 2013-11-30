@@ -4,11 +4,9 @@ Kidtimer should work on any recent version of Ubuntu, both 32 & 64 bit. Should a
 
 So this is how to install it and use it;
 
-1. Copy and paste the code into a file called kidtimer.install.
-
-2. Execute it: 
+1. Download the kidtimer deb file and install using Software Center or use the following line;
 <pre>
-sudo ./kidtimer.install
+sudo dpkg -i kidtimer*.deb
 </pre>
 
 3. Run it:
