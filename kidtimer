@@ -248,7 +248,7 @@ cat $basedir/time/$KID.ttl
 
 go_tui () {
 go_command_list
-echo -n "Choose: "; read -e X
+echo -n "Choose: "; read X
 case "$X" in
 1) go_setup_user
         ;;
@@ -314,7 +314,7 @@ fi
 
 go_modify_user () {
 echo
-echo -n "Username: "; read -e U
+echo -n "Username: "; read U
 grep -q ^$U $configdir/kid.list
 if [ $? -eq 0 ]; then
         if [ -e /usr/bin/nano ]; then
@@ -332,7 +332,7 @@ fi
 
 go_remove_user () {
 echo
-echo -n "Username: "; read -e U
+echo -n "Username: "; read U
 grep -q ^$U $configdir/kid.list
 if [ $? -eq 0 ]; then
         grep -v ^$U $configdir/kid.list > /tmp/kidtimer.tmp
