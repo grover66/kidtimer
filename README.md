@@ -28,6 +28,11 @@ Add time to a user's account (for that day only):
 sudo kidtimer addtime user minutes
 </pre>
 
+To check user's time:
+<pre>
+sudo kidtimer gettime user
+</pre>
+
 Features:
 
 Allow your kid specific hours of the day to access the computer, both weekday and weekend.
@@ -38,6 +43,9 @@ Key files:
 <pre>
 /etc/kidtimer/kid.list
 /etc/cron.d/kidtimer
+/usr/local/kidtimer/locale/de_DE.UTF-8 #German
+/usr/local/kidtimer/locale/en_US.UTF-8 #English
+/usr/local/kidtimer/locale/es_ES.UTF-8 #Spanish
 /usr/local/kidtimer/schedule/<user>
 /usr/local/kidtimer/time/<user>.ttl
 /usr/local/bin/kidtimer
