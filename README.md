@@ -5,7 +5,7 @@ Kidtimer should work on any recent version of Ubuntu, both 32 & 64 bit. Should a
 So this is how to install it and use it;
 
 1. Download the latest kidtimer deb file;
-https://github.com/grover66/kidtimer/raw/master/kidtimer_2.2-1.deb
+https://github.com/grover66/kidtimer/raw/master/kidtimer_2.2-2.deb
 
 2. Install it using Software Center or use the following line;
 <pre>
@@ -49,6 +49,11 @@ Key files:
 /usr/local/kidtimer/locale/de_DE.UTF-8 #German
 /usr/local/kidtimer/locale/en_US.UTF-8 #English
 /usr/local/kidtimer/locale/es_ES.UTF-8 #Spanish
+/usr/local/kidtimer/locale/fr_FR.UTF-8 #French
+/usr/local/kidtimer/locale/fr_BE.UTF-8 #French
+/usr/local/kidtimer/locale/fr_CA.UTF-8 #French
+/usr/local/kidtimer/locale/fr_CH.UTF-8 #French
+/usr/local/kidtimer/locale/it_IT.UTF-8 #Italian
 /usr/local/kidtimer/schedule/<user>
 /usr/local/kidtimer/time/<user>.ttl
 /usr/local/bin/kidtimer
