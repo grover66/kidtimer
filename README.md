@@ -7,12 +7,9 @@ So this is how to install it and use it;
 1. Download the latest kidtimer deb file;
 https://github.com/grover66/kidtimer/raw/master/kidtimer_2.2-4.deb
 
-2. Install it using Software Center or use the following line;
+2. Install it using Software Center or use the following lines;
 <pre>
-#This will install kidtimer.
 sudo dpkg -i kidtimer*.deb
-
-#This will install any dependencies.
 sudo apt-get -f install
 </pre>
 
