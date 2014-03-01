@@ -2,6 +2,13 @@ I have been looking for a solution to this for a long time. I have two kids and 
 
 Kidtimer should work on any recent version of Ubuntu, both 32 & 64 bit. Should also work on Debian too. It uses standard Linux utilities and notify-send (for user notification).
 
+### NOTE ###
+The "at" utility is required for kidtimer to work properly.
+Yuo can install it using the following line;
+<pre>
+sudo apt-get install at
+</pre>
+
 So this is how to install it and use it;
 
 1. Download the latest kidtimer deb file;
