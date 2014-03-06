@@ -1,0 +1,22 @@
+#italian
+Il vostro tempo al computer si concluderà in 1 minuto.
+Il vostro tempo al computer si concluderà in 2 minuti.
+Il vostro tempo al computer si concluderà in soli 3 minuti.
+Il vostro tempo al computer si concluderà in 4 minuti.
+Il vostro tempo al computer si concluderà in 5 minuti.
+Limiti per gli utenti di installazione.
+Modifica limiti per gli utenti.
+Rimuovere limiti per gli utenti.
+Elenco utenti configurati.
+Quit.
+Errore.
+Fatto.
+Gli utenti configurati per kidtimer.
+Nessun utente configurati.
+Nome utente:
+Modify limits now ?(y/n):
+L'utente non esiste. Si prega di creare utente utilizzando il comando useradd prima.
+Utente non setup.
+Errore. Manca dipendenze dei pacchetti.
+Si prega di installare utilizzando la seguente riga;
+Sintassi: SommaTempi <utente> <minutes|reset>

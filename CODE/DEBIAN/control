@@ -1,0 +1,10 @@
+Package: kidtimer
+Version: 2.2-6
+Section: utils
+Priority: optional
+Architecture: all
+Depends: at, libnotify-bin, bsdutils
+Installed-Size: 6
+Maintainer: Michael Groves <grover66@gmail.com>
+Homepage: http://github.com/grover66/kidtimer
+Description: Set daily limits on computer time.

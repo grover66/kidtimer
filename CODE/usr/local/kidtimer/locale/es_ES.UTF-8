@@ -1,0 +1,22 @@
+#spanish
+Tu tiempo en el ordenador se termina en 1 minuto.
+Tu tiempo en el ordenador se termina en 2 minutos.
+Tu tiempo en el ordenador se termina en 3 minutos.
+Tu tiempo en el ordenador se termina en 4 minutos.
+Tu tiempo en el ordenador se termina en 5 minutos.
+Límites de usuario de instalación.
+Modificar los límites del usuario.
+Retire los límites del usuario.
+Lista de usuarios configurado.
+Salir.
+Error.
+Hecho.
+Los usuarios configurados para KidTimer.
+No hay usuarios configurados.
+Nombre de usuario:
+Modify limits now ?(y/n):
+El usuario no existe. Por favor, cree el usuario con el comando useradd primero.
+El usuario no instalación.
+Error. Missing dependencias de paquetes.
+Por favor, instale mediante la siguiente línea;
+Sintaxis: tiempoSuma <usuario> <minutes|reset>

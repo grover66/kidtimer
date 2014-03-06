@@ -1,0 +1,403 @@
+#!/bin/bash
+# Restrict kids computer access to specific hours and total time.
+# By: Michael Groves - grover66_at_gmail_dot_com
+
+#variables
+#LANG="en_US.UTF-8" #unremark to change preferred language.
+basedir="/usr/local/kidtimer"
+configdir="/etc/kidtimer"
+Cdate=`/bin/date +%Y-%m-%d`
+TUI=0
+HOUR=`/bin/date +%H`
+DOW=`/bin/date +%u`
+WEEKEND="no"
+[ "$DOW" == "6" ] && WEEKEND="yes"
+[ "$DOW" == "7" ] && WEEKEND="yes"
+[ ! -e $configdir/kid.list ] && touch $configdir/kid.list
+[ ! -e $basedir/locale/$LANG ] && LANG="en_US.UTF-8"
+
+#arguments
+[ $# -eq 0 ] && TUI=1
+[ $# -eq 1 ] && COMMAND=$1
+[ $# -eq 2 ] && COMMAND=$1 && KID=$2
+[ $# -eq 3 ] && COMMAND=$1 && KID=$2 && Time=$3
+
+################# Subroutines ##################
+################################################
+
+get_info () {
+echo "kidtimer info"
+echo "---------------------------------------------"
+/bin/date
+echo "---"
+echo "find /usr/local/kidtimer/ -print | sort"
+find /usr/local/kidtimer/ -print | sort
+echo "---"
+echo "cat $configdir/kid.list"
+cat $configdir/kid.list
+echo "---"
+echo "passwd -S -a"
+passwd -S -a
+echo "---"
+echo "cat /usr/local/kidtimer/schedule/*"
+cat /usr/local/kidtimer/schedule/*
+echo "---"
+echo "cat /usr/local/kidtimer/time/*"
+cat /usr/local/kidtimer/time/*
+echo "---"
+echo "cat /etc/cron.d/kidtimer"
+cat /etc/cron.d/kidtimer
+echo "---"
+echo "/usr/bin/apt-cache showpkg kidtimer"
+/usr/bin/apt-cache showpkg kidtimer
+echo "---"
+echo "cat /etc/lsb-release"
+cat /etc/lsb-release
+echo "---"
+echo "uname -a"
+uname -a
+echo "---"
+echo "/usr/bin/env"
+/usr/bin/env
+echo
+}
+
+
+go_check () {
+for I in `cat $configdir/kid.list`; do
+        /usr/bin/users | grep -q $I
+        if [ $? -eq 0 ]; then
+                if [ -e $basedir/time/$I.ttl ]; then
+                        C=`cat $basedir/time/$I.ttl`
+                        C=$((C - 1))
+                        echo $C > $basedir/time/$I.ttl
+                else
+			get_ttl_time $I > $basedir/time/$I.ttl
+                        C=`cat $basedir/time/$I.ttl`
+                fi
+		# check time
+		if [ $C -le 5 ]; then
+        	        if [ ! -e /tmp/kidtimer.shutdown.$I ]; then
+        	                /usr/bin/passwd $I -l
+        	                go_logout $I
+        	        fi
+        	fi
+        else
+                go_clean_jobs $I
+        fi
+done
+}
+
+
+get_ttl_time () {
+        [ "$WEEKEND" == "no" ] && cat $basedir/schedule/$1 | grep ^MAX | awk '{ print $2 }'
+        [ "$WEEKEND" == "yes" ] && cat $basedir/schedule/$1 | grep ^MAX | awk '{ print $3 }'
+}
+
+
+go_clean_jobs () {
+K=$1
+for I in `/usr/bin/atq | awk '{ print $1 }' | sort`; do
+        /usr/bin/at -c $I | grep kidtimer | grep -q $K
+        [ $? -eq 0 ] && /usr/bin/at -d $I
+done
+[ -e /tmp/kidtimer.shutdown.$K ] && rm -rf /tmp/kidtimer.shutdown.$K
+}
+
+
+go_daily () {
+for I in `cat $configdir/kid.list`; do
+        /usr/bin/stat $basedir/time/$I.ttl | grep ^Modify | grep -q $Cdate
+        if [ ! $? -eq 0 ]; then
+		get_ttl_time $I > $basedir/time/$I.ttl
+        fi
+done
+go_hourly
+}
+
+
+go_hourly () {
+if [ -s $configdir/kid.list ]; then
+        for I in `cat $configdir/kid.list`; do
+                if [ -e $basedir/schedule/$I ]; then
+                        [ -e $basedir/time/$I.ttl ] && C=`cat $basedir/time/$I.ttl`
+                        [ $C -le 0 ] && /usr/bin/passwd $I -l && exit 0
+                        [ "$WEEKEND" == "no" ] && R=`grep ^$HOUR $basedir/schedule/$I | awk '{ print $2 }'`
+                        [ "$WEEKEND" == "yes" ] && R=`grep ^$HOUR $basedir/schedule/$I | awk '{ print $3 }'`
+                        if [ "$R" == "y" ]; then
+                                /usr/bin/passwd $I -u
+                        else
+                                /usr/bin/passwd $I -l
+                                /usr/bin/users | grep -q $I && /usr/local/bin/kidtimer shutdown $I
+                        fi
+                fi
+        done
+fi
+}
+
+
+go_logout () {
+K=$1
+echo "$basedir/send5.sh $K" | at now + 1 minutes
+echo "$basedir/send4.sh $K" | at now + 2 minutes
+echo "$basedir/send3.sh $K" | at now + 3 minutes
+echo "$basedir/send2.sh $K" | at now + 4 minutes
+echo "$basedir/send1.sh $K" | at now + 5 minutes
+echo "$basedir/logout.sh $K" | at now + 6 minutes
+touch /tmp/kidtimer.shutdown.$K
+}
+
+
+go_echo_error () {
+echo "`sed -n '12p' /usr/local/kidtimer/locale/$LANG`"
+}
+
+
+go_echo_done () {
+echo "`sed -n '13p' /usr/local/kidtimer/locale/$LANG`"
+}
+
+
+go_reset_time () {
+get_ttl_time $KID > $basedir/time/$KID.ttl
+/usr/bin/passwd $KID -u
+go_clean_jobs $KID
+go_echo_done
+}
+
+
+go_addtime () {
+U=$KID
+A=$Time
+grep -q $U $configdir/kid.list
+if [ $? -eq 0 ]; then 
+	if [ "$A" == "reset" ]; then
+		get_ttl_time $U > $basedir/time/$U.ttl
+        	go_echo_done
+        	exit 0
+	elif [ "$A" == "" ]; then
+	        go_echo_error
+		#english: Syntax: addtime <user> <minutes|reset>
+	        echo "`sed -n '22p' /usr/local/kidtimer/locale/$LANG`"
+	        exit 1
+	else        
+	        C=`cat $basedir/time/$KID.ttl`
+	        C=$((C + Time))
+	        echo $C > $basedir/time/$KID.ttl
+		get_time
+	fi
+	/usr/bin/passwd $KID -u
+	go_clean_jobs $KID
+else
+	go_echo_error
+	#english: User not setup.
+	echo "`sed -n '19p' /usr/local/kidtimer/locale/$LANG`"
+	exit 1
+fi
+}
+
+
+get_time () {
+if [ -e $basedir/time/$KID.ttl ]; then
+	cat $basedir/time/$KID.ttl
+else
+	echo
+	#english: User not setup.
+	echo "`sed -n '19p' /usr/local/kidtimer/locale/$LANG`"
+	echo
+fi
+}
+
+
+go_tui () {
+go_command_list
+echo -n "Choose: "; read X
+case "$X" in
+1) go_setup_user
+        ;;
+2) go_modify_user
+        ;;
+3) go_remove_user
+        ;;
+4) go_list_users
+        ;;
+5) exit 0
+        ;;
+esac
+go_tui
+}
+
+
+go_command_list () {
+echo
+echo "1) "`sed -n '7p' /usr/local/kidtimer/locale/$LANG`
+echo "2) "`sed -n '8p' /usr/local/kidtimer/locale/$LANG`
+echo "3) "`sed -n '9p' /usr/local/kidtimer/locale/$LANG`
+echo "4) "`sed -n '10p' /usr/local/kidtimer/locale/$LANG`
+echo "5) "`sed -n '11p' /usr/local/kidtimer/locale/$LANG`
+echo
+}
+
+
+go_list_users () {
+echo
+#english: Users configured for kidtimer:
+echo "`sed -n '14p' /usr/local/kidtimer/locale/$LANG`"
+if [ -s $configdir/kid.list ]; then
+        cat $configdir/kid.list
+else
+	#english: No configured users.
+        echo "`sed -n '15p' /usr/local/kidtimer/locale/$LANG`"
+	echo
+fi
+}
+
+go_setup_user () {
+echo
+#english: Username:
+echo -n "`sed -n '16p' /usr/local/kidtimer/locale/$LANG` "; read U
+/usr/bin/id $U > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+        /bin/cp $basedir/schedule/blank $basedir/schedule/$U
+	get_ttl_time $U > $basedir/time/$U.ttl
+        echo $U >> $configdir/kid.list
+        go_echo_done
+        echo
+	#english: Modify limits now ?(y/n):
+        echo -n "`sed -n '17p' /usr/local/kidtimer/locale/$LANG`"; read M
+        if [ "$M" == "y" ]; then
+                if [ -e /usr/bin/nano ]; then
+                	/usr/bin/nano $basedir/schedule/$U
+			get_ttl_time $U > $basedir/time/$U.ttl
+                 	go_echo_done
+         	else
+                	/usr/bin/vi $basedir/schedule/$U
+			get_ttl_time $U > $basedir/time/$U.ttl
+                	go_echo_done
+                fi
+        fi
+else
+	go_echo_error
+	#english: User does not exist. Please create user using the useradd command first.
+        echo "`sed -n '18p' /usr/local/kidtimer/locale/$LANG`"
+fi
+}
+
+
+go_modify_user () {
+echo
+#english: Username:
+echo -n "`sed -n '16p' /usr/local/kidtimer/locale/$LANG` "; read U
+grep -q ^$U $configdir/kid.list
+if [ $? -eq 0 ]; then
+        if [ -e /usr/bin/nano ]; then
+                /usr/bin/nano $basedir/schedule/$U
+                go_echo_done
+        else
+                /usr/bin/vi $basedir/schedule/$U
+                go_echo_done
+        fi
+else
+	go_echo_error
+	#english: User not setup.
+        echo "`sed -n '19p' /usr/local/kidtimer/locale/$LANG`"
+	echo
+fi
+}
+
+
+go_remove_user () {
+echo
+#english: Username:
+echo -n "`sed -n '16p' /usr/local/kidtimer/locale/$LANG` "; read U
+grep -q ^$U $configdir/kid.list
+if [ $? -eq 0 ]; then
+        grep -v ^$U $configdir/kid.list > /tmp/kidtimer.tmp
+        cat /tmp/kidtimer.tmp > $configdir/kid.list
+        go_echo_done
+else
+	go_echo_error
+	#english: User not setup.
+        echo "`sed -n '19p' /usr/local/kidtimer/locale/$LANG`"
+	echo
+fi
+}
+
+
+go_help () {
+echo
+echo "Commands:"
+echo "--------------------------------------------------------------------------------"
+echo "addtime <user> <minutes> ... Increases allowed time for the day."
+echo "gettime <user> ... Prints remaining time for the day."
+echo "reset <user> ... Reset time for the day."
+echo "logout <user> ... Starts logout sequence for user."
+echo "hourly ... Enables/disables user access based on the schedule."
+echo "daily ... Resets time for the new day."
+echo "info ... Gather local configurations to troubleshoot issues."
+echo "help ... This list."
+echo "--------------------------------------------------------------------------------"
+}
+
+check_dependencies () {
+#at
+P1="";P2="";P3=""
+/usr/bin/dpkg -s at >/dev/null 2>/dev/null
+if [ ! $? -eq 0 ]; then
+	P1="at"
+	status=1
+fi
+#libnotify-bin
+/usr/bin/dpkg -s libnotify-bin >/dev/null 2>/dev/null
+if [ ! $? -eq 0 ]; then
+        P2="libnotify-bin"
+        status=1
+fi
+#bsdutils
+/usr/bin/dpkg -s bsdutils >/dev/null 2>/dev/null
+if [ ! $? -eq 0 ]; then
+        P3="bsdutils"
+        status=1
+fi
+if [ $status -eq 1 ]; then
+	echo
+	#english: Error. Missing package dependencies.
+	echo "`sed -n '20p' /usr/local/kidtimer/locale/$LANG`"
+	#english: Please install using the following line;
+	echo "`sed -n '21p' /usr/local/kidtimer/locale/$LANG`"
+	echo "sudo apt-get install "$P1" "$P2" "$P3
+	exit 1
+fi
+}
+
+###################### Code ####################
+################################################
+
+if [ $TUI -eq 1 ]; then
+	check_dependencies
+	go_tui
+fi
+
+case "$COMMAND" in
+addtime) go_addtime
+        ;;
+reset) go_reset_time
+        ;;
+gettime) get_time
+        ;;
+logout) go_logout $KID
+        ;;
+hourly) go_hourly
+        ;;
+daily) go_daily
+        ;;
+check) go_check
+        ;;
+info) get_info
+        ;;
+-h) go_help
+        ;;
+help) go_help
+        ;;
+esac
+exit 0

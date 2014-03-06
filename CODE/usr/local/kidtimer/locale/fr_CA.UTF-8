@@ -1,0 +1,22 @@
+#french Canadian
+Heure de votre ordinateur se terminera en 1 minute.
+Heure de votre ordinateur se terminera en 2 minutes.
+Heure de votre ordinateur se terminera en 3 minutes.
+Heure de votre ordinateur se terminera en 4 minutes.
+Heure de votre ordinateur se terminera en 5 minutes.
+Limites d'utilisation de l'installation.
+Modifier les limites d'utilisation.
+Supprimer les limites d'utilisation.
+Liste utilisateurs configurés.
+Quitter.
+Erreur.
+Terminé.
+Les utilisateurs configurés pour KidTimer.
+Pas utilisateurs configurés.
+Nom d'utilisateur:
+Modify limits now ?(y/n):
+Utilisateur n'existe pas. S'il vous plaît créer l'utilisateur en utilisant d'abord la commande useradd.
+Utilisateur non configuration.
+Erreur. Manquant dépendances des paquets.
+S'il vous plaît installer en utilisant la ligne suivante;
+Syntaxe: AddTime <utilisateur> <minutes|reset>

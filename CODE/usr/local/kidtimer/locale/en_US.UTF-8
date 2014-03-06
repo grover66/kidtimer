@@ -1,0 +1,22 @@
+#english
+Your computer time will end in 1 minute.
+Your computer time will end in 2 minutes.
+Your computer time will end in 3 minutes.
+Your computer time will end in 4 minutes.
+Your computer time will end in 5 minutes.
+Setup user limits.
+Modify user limits.
+Remove user limits.
+List configured users.
+Quit.
+Error.
+Done.
+Users configured for kidtimer:
+No configured users.
+Username:
+Modify limits now ?(y/n):
+User does not exist. Please create user using the useradd command first.
+User not setup.
+Error. Missing package dependencies.
+Please install using the following line;
+Syntax: addtime <user> <minutes|reset>
