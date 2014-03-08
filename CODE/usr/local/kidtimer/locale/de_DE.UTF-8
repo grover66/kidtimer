@@ -4,19 +4,19 @@ Deine Zeit am Computer endet in 2 Minuten.
 Deine Zeit am Computer endet in 3 Minuten.
 Deine Zeit am Computer endet in 4 Minuten.
 Deine Zeit am Computer endet in 5 Minuten.
-Setup-Benutzer Grenzen.
-Ändern Benutzergrenzen.
-Entfernen von Benutzer Grenzen.
-Liste konfigurierten Benutzer.
-Quit.
+Benutzerlimiten einrichten.
+Benutzerlimiten ändern.
+Benutzerlimiten löschen.
+Konfigurierte Benutzer auflisten.
+Beenden.
 Fehler.
 Fertig.
 Benutzer für KidTimer konfiguriert.
 Keine konfigurierten Benutzer.
 Benutzername:
-Modify limits now ?(y/n):
-Benutzer existiert nicht. Bitte erstellen Sie Benutzer mit Hilfe zunächst den Befehl useradd.
+Limiten jetzt ändern ?(y/n):
+Benutzer existiert nicht. Bitte erstellen Sie den Benutzer zunächst mit dem Befehl useradd.
 Benutzer nicht eingerichtet.
 Fehler. Fehlende Paket-Abhängigkeiten.
-Bitte installieren Sie mit der folgenden Zeile;
+Bitte installieren Sie die fehlenden Pakete mit Hilfe der folgenden Zeile;
 Syntax: addtime <user> <minutes|reset>
