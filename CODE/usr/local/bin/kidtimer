@@ -107,7 +107,7 @@ done
 
 go_daily () {
 for I in `cat $configdir/kid.list`; do
-        /usr/bin/stat $basedir/time/$I.ttl | grep ^Modify | grep -q $Cdate
+        /usr/bin/stat -c %y $basedir/time/$I.ttl | grep -q $Cdate
         if [ ! $? -eq 0 ]; then
 		get_ttl_time $I > $basedir/time/$I.ttl
         fi
