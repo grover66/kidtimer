@@ -341,25 +341,25 @@ echo "--------------------------------------------------------------------------
 
 check_dependencies () {
 #at
-P1="";P2="";P3=""
+P1="";P2="";P3="";pstatus="0"
 /usr/bin/dpkg -s at >/dev/null 2>/dev/null
 if [ ! $? -eq 0 ]; then
 	P1="at"
-	status=1
+	pstatus=1
 fi
 #libnotify-bin
 /usr/bin/dpkg -s libnotify-bin >/dev/null 2>/dev/null
 if [ ! $? -eq 0 ]; then
         P2="libnotify-bin"
-        status=1
+        pstatus=1
 fi
 #bsdutils
 /usr/bin/dpkg -s bsdutils >/dev/null 2>/dev/null
 if [ ! $? -eq 0 ]; then
         P3="bsdutils"
-        status=1
+        pstatus=1
 fi
-if [ $status -eq 1 ]; then
+if [ "$pstatus" == "1" ]; then
 	echo
 	#english: Error. Missing package dependencies.
 	echo "`sed -n '20p' /usr/local/kidtimer/locale/$LANG`"
