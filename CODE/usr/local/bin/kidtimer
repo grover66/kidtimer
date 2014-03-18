@@ -138,13 +138,103 @@ fi
 
 go_logout () {
 K=$1
-echo "$basedir/send5.sh $K" | at now + 1 minutes
-echo "$basedir/send4.sh $K" | at now + 2 minutes
-echo "$basedir/send3.sh $K" | at now + 3 minutes
-echo "$basedir/send2.sh $K" | at now + 4 minutes
-echo "$basedir/send1.sh $K" | at now + 5 minutes
-echo "$basedir/logout.sh $K" | at now + 6 minutes
+go_send5 $K
+go_send4 $K
+go_send3 $K
+go_send2 $K
+go_send1 $K
+go_killall $K
 touch /tmp/kidtimer.shutdown.$K
+}
+
+
+go_send5 () {
+K=$1
+D=`/usr/bin/who | grep $K | grep tty | cut -d\( -f2 | sed s/\)// | sed s/://`
+echo "#!/bin/bash" > /tmp/send5.bash
+if [ -e $basedir/locale/$LANG ]; then
+	echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
+	\"ALERT\" \"`sed -n '6p' /usr/local/kidtimer/locale/$LANG`\"'" >> /tmp/send5.bash
+else
+	echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
+	\"ALERT\" \"Your computer time will end in 5 minutes.\"'" >> /tmp/send5.bash
+fi
+echo "rm -f /tmp/send5.bash" >> /tmp/send5.bash
+echo "bash /tmp/send5.bash" | at now + 1 minutes
+}
+
+
+go_send4 () {
+K=$1
+D=`/usr/bin/who | grep $K | grep tty | cut -d\( -f2 | sed s/\)// | sed s/://`
+echo "#!/bin/bash" > /tmp/send4.bash
+if [ -e $basedir/locale/$LANG ]; then
+        echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
+        \"ALERT\" \"`sed -n '5p' /usr/local/kidtimer/locale/$LANG`\"'" >> /tmp/send4.bash
+else
+        echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
+        \"ALERT\" \"Your computer time will end in 4 minutes.\"'" >> /tmp/send4.bash
+fi
+echo "rm -f /tmp/send4.bash" >> /tmp/send4.bash
+echo "bash /tmp/send4.bash" | at now + 2 minutes
+}
+
+
+go_send3 () {
+K=$1
+D=`/usr/bin/who | grep $K | grep tty | cut -d\( -f2 | sed s/\)// | sed s/://`
+echo "#!/bin/bash" > /tmp/send3.bash
+if [ -e $basedir/locale/$LANG ]; then
+        echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
+        \"ALERT\" \"`sed -n '4p' /usr/local/kidtimer/locale/$LANG`\"'" >> /tmp/send3.bash
+else
+        echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
+        \"ALERT\" \"Your computer time will end in 3 minutes.\"'" >> /tmp/send3.bash
+fi
+echo "rm -f /tmp/send3.bash" >> /tmp/send3.bash
+echo "bash /tmp/send3.bash" | at now + 3 minutes
+}
+
+
+go_send2 () {
+K=$1
+D=`/usr/bin/who | grep $K | grep tty | cut -d\( -f2 | sed s/\)// | sed s/://`
+echo "#!/bin/bash" > /tmp/send2.bash
+if [ -e $basedir/locale/$LANG ]; then
+        echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
+        \"ALERT\" \"`sed -n '3p' /usr/local/kidtimer/locale/$LANG`\"'" >> /tmp/send2.bash
+else
+        echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
+        \"ALERT\" \"Your computer time will end in 2 minutes.\"'" >> /tmp/send2.bash
+fi
+echo "rm -f /tmp/send2.bash" >> /tmp/send2.bash
+echo "bash /tmp/send2.bash" | at now + 4 minutes
+}
+
+
+go_send1 () {
+K=$1
+D=`/usr/bin/who | grep $K | grep tty | cut -d\( -f2 | sed s/\)// | sed s/://`
+echo "#!/bin/bash" > /tmp/send1.bash
+if [ -e $basedir/locale/$LANG ]; then
+        echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
+        \"ALERT\" \"`sed -n '2p' /usr/local/kidtimer/locale/$LANG`\"'" >> /tmp/send1.bash
+else
+        echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
+        \"ALERT\" \"Your computer time will end in 1 minutes.\"'" >> /tmp/send1.bash
+fi
+echo "rm -f /tmp/send1.bash" >> /tmp/send1.bash
+echo "bash /tmp/send1.bash" | at now + 5 minutes
+}
+
+
+go_killall () {
+K=$1
+echo "#!/bin/bash" > /tmp/killall.bash
+echo "/usr/bin/pkill -KILL -u $K" >> /tmp/killall.bash
+echo "rm -rf /tmp/kidtimer.shutdown.$K" >> /tmp/killall.bash
+echo "rm -f /tmp/killall.bash" >> /tmp/killall.bash
+echo "bash /tmp/killall.bash" | at now + 6 minutes
 }
 
 
