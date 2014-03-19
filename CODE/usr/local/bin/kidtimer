@@ -424,6 +424,7 @@ echo "reset <user> ... Reset time for the day."
 echo "logout <user> ... Starts logout sequence for user."
 echo "hourly ... Enables/disables user access based on the schedule."
 echo "daily ... Resets time for the new day."
+echo "update ... Updates kidtimer to the latest version."
 echo "info ... Gather local configurations to troubleshoot issues."
 echo "help ... This list."
 echo "--------------------------------------------------------------------------------"
@@ -460,6 +461,20 @@ if [ "$pstatus" == "1" ]; then
 fi
 }
 
+get_update () {
+URL='https://github.com/grover66/kidtimer/raw/master/DEBS/kidtimer_latest.deb'
+if [ -e /usr/bin/wget ]; then
+	/usr/bin/wget "$URL" -qO /tmp/kidtimer_latest.deb
+	/usr/bin/dpkg -i /tmp/kidtimer_latest.deb
+	rm -f /tmp/kidtimer_latest.deb
+else
+	echo
+	echo "Error. Requires wget"
+	echo "To install wget; sudo apt-get install wget"
+fi
+}
+
+
 ###################### Code ####################
 ################################################
 
@@ -480,6 +495,8 @@ logout) go_logout $KID
 hourly) go_hourly
         ;;
 daily) go_daily
+        ;;
+update) get_update
         ;;
 check) go_check
         ;;

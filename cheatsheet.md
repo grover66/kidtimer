@@ -7,6 +7,7 @@ addtime <user> <minutes> ... Increases allowed time for the day.
 gettime <user> ... Prints remaining time for the day.
 reset <user> ... Reset time for the day.
 logout <user> ... Starts logout sequence for user.
+update ... Updates kidtimer to the latest version.
 info ... Gather local configurations to troubleshoot issues.
 help ... This list.
 ```
