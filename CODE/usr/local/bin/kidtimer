@@ -98,7 +98,7 @@ get_ttl_time () {
 go_clean_jobs () {
 K=$1
 for I in `/usr/bin/atq | awk '{ print $1 }' | sort`; do
-        /usr/bin/at -c $I | grep kidtimer | grep -q $K
+        /usr/bin/at -c $I | grep -q "bash.$K"
         [ $? -eq 0 ] && /usr/bin/at -d $I
 done
 [ -e /tmp/kidtimer.shutdown.$K ] && rm -rf /tmp/kidtimer.shutdown.$K
@@ -151,90 +151,90 @@ touch /tmp/kidtimer.shutdown.$K
 go_send5 () {
 K=$1
 D=`/usr/bin/who | grep $K | grep tty | cut -d\( -f2 | sed s/\)// | sed s/://`
-echo "#!/bin/bash" > /tmp/send5.bash
+echo "#!/bin/bash" > /tmp/send5.bash.$K
 if [ -e $basedir/locale/$LANG ]; then
 	echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
-	\"ALERT\" \"`sed -n '6p' /usr/local/kidtimer/locale/$LANG`\"'" >> /tmp/send5.bash
+	\"ALERT\" \"`sed -n '6p' /usr/local/kidtimer/locale/$LANG`\"'" >> /tmp/send5.bash.$k
 else
 	echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
-	\"ALERT\" \"Your computer time will end in 5 minutes.\"'" >> /tmp/send5.bash
+	\"ALERT\" \"Your computer time will end in 5 minutes.\"'" >> /tmp/send5.bash.$K
 fi
-echo "rm -f /tmp/send5.bash" >> /tmp/send5.bash
-echo "bash /tmp/send5.bash" | at now + 1 minutes
+echo "rm -f /tmp/send5.bash.$K" >> /tmp/send5.bash.$K
+echo "bash /tmp/send5.bash.$K" | at now + 1 minutes
 }
 
 
 go_send4 () {
 K=$1
 D=`/usr/bin/who | grep $K | grep tty | cut -d\( -f2 | sed s/\)// | sed s/://`
-echo "#!/bin/bash" > /tmp/send4.bash
+echo "#!/bin/bash" > /tmp/send4.bash.$K
 if [ -e $basedir/locale/$LANG ]; then
         echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
-        \"ALERT\" \"`sed -n '5p' /usr/local/kidtimer/locale/$LANG`\"'" >> /tmp/send4.bash
+        \"ALERT\" \"`sed -n '5p' /usr/local/kidtimer/locale/$LANG`\"'" >> /tmp/send4.bash.$K
 else
         echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
-        \"ALERT\" \"Your computer time will end in 4 minutes.\"'" >> /tmp/send4.bash
+        \"ALERT\" \"Your computer time will end in 4 minutes.\"'" >> /tmp/send4.bash.$K
 fi
-echo "rm -f /tmp/send4.bash" >> /tmp/send4.bash
-echo "bash /tmp/send4.bash" | at now + 2 minutes
+echo "rm -f /tmp/send4.bash.$K" >> /tmp/send4.bash.$K
+echo "bash /tmp/send4.bash.$K" | at now + 2 minutes
 }
 
 
 go_send3 () {
 K=$1
 D=`/usr/bin/who | grep $K | grep tty | cut -d\( -f2 | sed s/\)// | sed s/://`
-echo "#!/bin/bash" > /tmp/send3.bash
+echo "#!/bin/bash" > /tmp/send3.bash.$K
 if [ -e $basedir/locale/$LANG ]; then
         echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
-        \"ALERT\" \"`sed -n '4p' /usr/local/kidtimer/locale/$LANG`\"'" >> /tmp/send3.bash
+        \"ALERT\" \"`sed -n '4p' /usr/local/kidtimer/locale/$LANG`\"'" >> /tmp/send3.bash.$K
 else
         echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
-        \"ALERT\" \"Your computer time will end in 3 minutes.\"'" >> /tmp/send3.bash
+        \"ALERT\" \"Your computer time will end in 3 minutes.\"'" >> /tmp/send3.bash.$K
 fi
-echo "rm -f /tmp/send3.bash" >> /tmp/send3.bash
-echo "bash /tmp/send3.bash" | at now + 3 minutes
+echo "rm -f /tmp/send3.bash.$K" >> /tmp/send3.bash.$K
+echo "bash /tmp/send3.bash.$K" | at now + 3 minutes
 }
 
 
 go_send2 () {
 K=$1
 D=`/usr/bin/who | grep $K | grep tty | cut -d\( -f2 | sed s/\)// | sed s/://`
-echo "#!/bin/bash" > /tmp/send2.bash
+echo "#!/bin/bash" > /tmp/send2.bash.$K
 if [ -e $basedir/locale/$LANG ]; then
         echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
-        \"ALERT\" \"`sed -n '3p' /usr/local/kidtimer/locale/$LANG`\"'" >> /tmp/send2.bash
+        \"ALERT\" \"`sed -n '3p' /usr/local/kidtimer/locale/$LANG`\"'" >> /tmp/send2.bash.$K
 else
         echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
-        \"ALERT\" \"Your computer time will end in 2 minutes.\"'" >> /tmp/send2.bash
+        \"ALERT\" \"Your computer time will end in 2 minutes.\"'" >> /tmp/send2.bash.$K
 fi
-echo "rm -f /tmp/send2.bash" >> /tmp/send2.bash
-echo "bash /tmp/send2.bash" | at now + 4 minutes
+echo "rm -f /tmp/send2.bash.$K" >> /tmp/send2.bash.$K
+echo "bash /tmp/send2.bash.$K" | at now + 4 minutes
 }
 
 
 go_send1 () {
 K=$1
 D=`/usr/bin/who | grep $K | grep tty | cut -d\( -f2 | sed s/\)// | sed s/://`
-echo "#!/bin/bash" > /tmp/send1.bash
+echo "#!/bin/bash" > /tmp/send1.bash.$K
 if [ -e $basedir/locale/$LANG ]; then
         echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
-        \"ALERT\" \"`sed -n '2p' /usr/local/kidtimer/locale/$LANG`\"'" >> /tmp/send1.bash
+        \"ALERT\" \"`sed -n '2p' /usr/local/kidtimer/locale/$LANG`\"'" >> /tmp/send1.bash.$K
 else
         echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
-        \"ALERT\" \"Your computer time will end in 1 minutes.\"'" >> /tmp/send1.bash
+        \"ALERT\" \"Your computer time will end in 1 minutes.\"'" >> /tmp/send1.bash.$K
 fi
-echo "rm -f /tmp/send1.bash" >> /tmp/send1.bash
-echo "bash /tmp/send1.bash" | at now + 5 minutes
+echo "rm -f /tmp/send1.bash.$K" >> /tmp/send1.bash.$K
+echo "bash /tmp/send1.bash.$K" | at now + 5 minutes
 }
 
 
 go_killall () {
 K=$1
-echo "#!/bin/bash" > /tmp/killall.bash
-echo "/usr/bin/pkill -KILL -u $K" >> /tmp/killall.bash
-echo "rm -rf /tmp/kidtimer.shutdown.$K" >> /tmp/killall.bash
-echo "rm -f /tmp/killall.bash" >> /tmp/killall.bash
-echo "bash /tmp/killall.bash" | at now + 6 minutes
+echo "#!/bin/bash" > /tmp/killall.bash.$K
+echo "/usr/bin/pkill -KILL -u $K" >> /tmp/killall.bash.$K
+echo "rm -rf /tmp/kidtimer.shutdown.$K" >> /tmp/killall.bash.$K
+echo "rm -f /tmp/killall.bash.$K" >> /tmp/killall.bash.$K
+echo "bash /tmp/killall.bash.$K" | at now + 6 minutes
 }
 
 
