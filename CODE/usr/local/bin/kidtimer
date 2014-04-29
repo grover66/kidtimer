@@ -150,7 +150,7 @@ touch /tmp/kidtimer.shutdown.$K
 
 go_send5 () {
 K=$1
-D=`/usr/bin/who | grep $K | grep tty | cut -d\( -f2 | sed s/\)// | sed s/://`
+D=`/usr/bin/who | grep $K | grep -m1 "(:" | cut -d\( -f2 | sed s/\)// | sed s/://`
 echo "#!/bin/bash" > /tmp/send5.bash.$K
 if [ -e $basedir/locale/$LANG ]; then
 	echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
@@ -166,7 +166,7 @@ echo "bash /tmp/send5.bash.$K" | at now + 1 minutes
 
 go_send4 () {
 K=$1
-D=`/usr/bin/who | grep $K | grep tty | cut -d\( -f2 | sed s/\)// | sed s/://`
+D=`/usr/bin/who | grep $K | grep -m1 "(:" | cut -d\( -f2 | sed s/\)// | sed s/://`
 echo "#!/bin/bash" > /tmp/send4.bash.$K
 if [ -e $basedir/locale/$LANG ]; then
         echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
@@ -182,7 +182,7 @@ echo "bash /tmp/send4.bash.$K" | at now + 2 minutes
 
 go_send3 () {
 K=$1
-D=`/usr/bin/who | grep $K | grep tty | cut -d\( -f2 | sed s/\)// | sed s/://`
+D=`/usr/bin/who | grep $K | grep -m1 "(:" | cut -d\( -f2 | sed s/\)// | sed s/://`
 echo "#!/bin/bash" > /tmp/send3.bash.$K
 if [ -e $basedir/locale/$LANG ]; then
         echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
@@ -198,7 +198,7 @@ echo "bash /tmp/send3.bash.$K" | at now + 3 minutes
 
 go_send2 () {
 K=$1
-D=`/usr/bin/who | grep $K | grep tty | cut -d\( -f2 | sed s/\)// | sed s/://`
+D=`/usr/bin/who | grep $K | grep -m1 "(:" | cut -d\( -f2 | sed s/\)// | sed s/://`
 echo "#!/bin/bash" > /tmp/send2.bash.$K
 if [ -e $basedir/locale/$LANG ]; then
         echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
@@ -214,7 +214,7 @@ echo "bash /tmp/send2.bash.$K" | at now + 4 minutes
 
 go_send1 () {
 K=$1
-D=`/usr/bin/who | grep $K | grep tty | cut -d\( -f2 | sed s/\)// | sed s/://`
+D=`/usr/bin/who | grep $K | grep -m1 "(:" | cut -d\( -f2 | sed s/\)// | sed s/://`
 echo "#!/bin/bash" > /tmp/send1.bash.$K
 if [ -e $basedir/locale/$LANG ]; then
         echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/share/pixmaps/gnome-set-time.png \
