@@ -171,6 +171,7 @@ echo "/bin/bash $TMPFILE" | /bin/su $K -c "/usr/bin/at now + $T minutes"
 
 go_killall () {
 K=$1
+/bin/rm -f /tmp/killall.bash.$K
 echo "#!/bin/bash" > /tmp/killall.bash.$K
 echo "/usr/bin/pkill -KILL -u $K" >> /tmp/killall.bash.$K
 echo "/bin/rm -rf /tmp/kidtimer.shutdown.$K" >> /tmp/killall.bash.$K
