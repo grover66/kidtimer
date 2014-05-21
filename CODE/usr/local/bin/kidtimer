@@ -64,7 +64,7 @@ echo
 
 
 go_check () {
-for I in `/bin/cat $configdir/kid.list`; do
+for I in `/bin/cat $configdir/kid.list | sort -u`; do
         /usr/bin/users | /bin/grep -q $I
         if [ $? -eq 0 ]; then
                 if [ -e $basedir/time/$I.ttl ]; then
@@ -106,7 +106,7 @@ done
 
 
 go_daily () {
-for I in `/bin/cat $configdir/kid.list`; do
+for I in `/bin/cat $configdir/kid.list | sort -u`; do
         /usr/bin/stat -c %y $basedir/time/$I.ttl | /bin/grep -q $Cdate
         if [ ! $? -eq 0 ]; then
 		get_ttl_time $I > $basedir/time/$I.ttl
@@ -118,7 +118,7 @@ go_hourly
 
 go_hourly () {
 if [ -s $configdir/kid.list ]; then
-        for I in `/bin/cat $configdir/kid.list`; do
+        for I in `/bin/cat $configdir/kid.list | sort -u`; do
                 if [ -e $basedir/schedule/$I ]; then
                         [ -e $basedir/time/$I.ttl ] && C=`/bin/cat $basedir/time/$I.ttl`
                         [ $C -le 0 ] && /usr/bin/passwd $I -l && exit 0
