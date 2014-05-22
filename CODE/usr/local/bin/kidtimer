@@ -156,16 +156,16 @@ TEXT=$((6-$T))
 TMPFILE="/tmp/kidtimer.send$T.bash.$K"
 /bin/rm -f $TMPFILE
 echo "#!/bin/bash" > $TMPFILE
-echo "export \$(/bin/egrep -z DBUS_SESSION_BUS_ADDRESS /proc/\$(/usr/bin/pgrep -u $K dbus-daemon|/usr/bin/head -1)/environ)" >> $TMPFILE
+D=`/usr/bin/who | grep $K | grep -m1 "(:" | cut -d\( -f2 | sed s/\)// | sed s/://`
 if [ -e $basedir/locale/$LANG ]; then
 	MSG=`/bin/sed -n "$LINE"p /usr/local/kidtimer/locale/$LANG`
 else
 	MSG="Your computer time will end in $TEXT minutes."
 fi
-echo "/usr/bin/notify-send -i /usr/local/kidtimer/icons/kidstimer-$TEXT.png \
-\"ALERT\" \"$MSG\"" >> $TMPFILE
+echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/local/kidtimer/icons/kidtimer-$TEXT.png \
+	\"ALERT\" \"$MSG\"'" >> $TMPFILE
 echo "/bin/rm -f $TMPFILE" >> $TMPFILE
-echo "/bin/bash $TMPFILE" | /bin/su $K -c "/usr/bin/at now + $T minutes"
+echo "/bin/bash $TMPFILE" | /usr/bin/at now + $T minutes
 }
 
 
