@@ -8,14 +8,7 @@ Modified to do the following.
 
 3) added the ability to provide a file that can provide more time.  My dauther comes to me and I issue her a key that she then creates as:  touch /tmp/key ... When kidtimer see's that file, it will issue a 'reset'.
 
-The key can be created as: 
-
-#!/bin/bash
-# Generate key to give to Samantha for more time
-
-time=`date +%s`
-file=$(expr $time / 10000)
-echo $file
+The key can be created with the generate_key.sh command
 
 ----------- Original text below
 
