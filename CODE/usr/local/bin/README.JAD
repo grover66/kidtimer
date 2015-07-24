@@ -1,0 +1,5 @@
+Original from:
+https://github.com/grover66/kidtimer
+
+# provided the print out to my 10 year old to see if she could find holes
+enscript --pretty-print --color -2r -MLetter -PHP-Officejet-Pro-8600 kidtimer

@@ -25,6 +25,56 @@ WEEKEND="no"
 ################# Subroutines ##################
 ################################################
 
+#
+# %%% not used yet
+#
+ttl_decr () {
+   min=$1
+
+   if [ $C -le 0 ]; then
+      min=0
+   else
+      min=$((min - 1))
+   fi
+}
+
+#
+#  Decriment ttl (time to live) in mins and return current time left
+#
+set_ttl () {
+   kid=$1
+   min=$2
+
+   #more time
+   mtime=`date +%s`
+   mfile=$(expr $mtime / 10000)
+   if [ -e /tmp/$mfile ]; then
+      /bin/rm -f /tmp/$mfile
+      reset_time $kid
+      return
+   fi
+
+
+   # Normal mode is to decriment a minute
+   if [ -e $basedir/time/$kid.ttl ]; then
+      min=`/bin/cat $basedir/time/$kid.ttl`
+      if [ $min -le 0 ]; then
+         min=0
+      else
+         min=$((min - 1))
+      fi
+
+      echo $min > $basedir/time/$kid.ttl
+
+#first time for a user, create file, and set default ttl
+   else
+       get_ttl_time $kid > $basedir/time/$kid.ttl   
+       min=`/bin/cat $basedir/time/$kid.ttl`
+   fi
+
+   return 0
+}
+
 get_info () {
 echo "kidtimer info"
 echo "---------------------------------------------"
@@ -64,27 +114,31 @@ echo
 
 
 go_check () {
-for I in `/bin/cat $configdir/kid.list | sort -u`; do
-        /usr/bin/users | /bin/grep -q $I
-        if [ $? -eq 0 ]; then
-                if [ -e $basedir/time/$I.ttl ]; then
-                        C=`/bin/cat $basedir/time/$I.ttl`
-                        C=$((C - 1))
-                        echo $C > $basedir/time/$I.ttl
-                else
-			get_ttl_time $I > $basedir/time/$I.ttl
-                        C=`/bin/cat $basedir/time/$I.ttl`
-                fi
-		# check time
-		if [ $C -le 5 ]; then
-        	        if [ ! -e /tmp/kidtimer.shutdown.$I ]; then
-        	                /usr/bin/passwd $I -l
-        	                go_logout $I
-        	        fi
-        	fi
-        else
-                go_clean_jobs $I
-        fi
+for kid in `/bin/cat $configdir/kid.list | sort -u`; do
+
+   # New day means we reset the ttl
+   /usr/bin/stat -c %y $basedir/time/$kid.ttl | /bin/grep -q $Cdate
+   if [ ! $? -eq 0 ]; then
+      reset_time $kid
+      return
+   fi
+
+    # This method ( /usr/bin/users ) to determine who is logged in is a kludge.  
+    # It ignores locked screens (screensaver active) and switched user states.
+    # change ttl for logged in user and return remaining time
+    /usr/bin/users | /bin/grep -q $kid
+    if [ $? -eq 0 ]; then
+
+       set_ttl $kid $min
+
+       # Are they allowed to use computer during this hour
+       hourlyCheck $kid $allowed
+
+       # check time, lock account, and start stutdown procedure, queue up jobs
+       if [ $min -le 5 ] || [ $allowed -eq 0 ]; then
+          go_logout $kid
+       fi
+    fi
 done
 }
 
@@ -98,37 +152,101 @@ get_ttl_time () {
 go_clean_jobs () {
 K=$1
 for I in `/usr/bin/atq | /usr/bin/awk '{ print $1 }' | /usr/bin/sort`; do
-        /usr/bin/at -c $I | /bin/grep -q "bash.$K"
-        [ $? -eq 0 ] && /usr/bin/at -d $I
+        /usr/bin/at -d $I
+#        /usr/bin/at -c $I | /bin/grep -q "bash.$K"
+#        [ $? -eq 0 ] && /usr/bin/at -d $I
 done
 [ -e /tmp/kidtimer.shutdown.$K ] && /bin/rm -rf /tmp/kidtimer.shutdown.$K
+[ -e /tmp/kidtimer.send1.bash.$K ] && /bin/rm -rf /tmp/kidtimer.send1.bash.$K
+[ -e /tmp/kidtimer.send2.bash.$K ] && /bin/rm -rf /tmp/kidtimer.send2.bash.$K
+[ -e /tmp/kidtimer.send3.bash.$K ] && /bin/rm -rf /tmp/kidtimer.send3.bash.$K
+[ -e /tmp/kidtimer.send4.bash.$K ] && /bin/rm -rf /tmp/kidtimer.send4.bash.$K
+[ -e /tmp/kidtimer.send5.bash.$K ] && /bin/rm -rf /tmp/kidtimer.send5.bash.$K
+[ -e /tmp/killall.bash.$K ] && /bin/rm -rf /tmp/killall.bash.$K
 }
 
 
+# From command line only.... check now handles this autmoatically... don't need
+#   to run from cron
+#
+# runs once per day and resets ttl back for kid
+# %%% what happens if machine is suspended and it missed its chance to run?
+# 
 go_daily () {
 for I in `/bin/cat $configdir/kid.list | sort -u`; do
+
         /usr/bin/stat -c %y $basedir/time/$I.ttl | /bin/grep -q $Cdate
+        #reset ttl for next day
         if [ ! $? -eq 0 ]; then
-		get_ttl_time $I > $basedir/time/$I.ttl
+           reset_time $I
         fi
 done
-go_hourly
+# %%% needs to be rethought
+#go_hourly
 }
 
+
+#
+# Determine if allowed to use computer during this schedule
+#
+hourlyCheck () {
+kid=$1
+allowed=$2
+min=1 #non zero value is all we need
+
+   if [ -e $basedir/schedule/$kid ]; then
+
+      #grab mins left
+      [ -e $basedir/time/$kid.ttl ] && min=`/bin/cat $basedir/time/$kid.ttl`
+      #lock account if out of minutes
+
+#%%% bug should return and not exit on 0
+      if [ $min -le 0 ] ; then
+        #/usr/bin/passwd $kid -l 
+        allowed=0
+        return 0
+      fi
+
+      # Disable/Enable depending on if allowed during time of day
+      [ "$WEEKEND" == "no" ] && R=`/bin/grep ^$HOUR $basedir/schedule/$kid | /usr/bin/awk '{ print $2 }'`
+      [ "$WEEKEND" == "yes" ] && R=`/bin/grep ^$HOUR $basedir/schedule/$kid | /usr/bin/awk '{ print $3 }'`
+      if [ "$R" == "y" ]; then
+         allowed=1   # allowed to use computer
+      else
+         allowed=0   # not allowed to use computer
+      fi
+
+   fi
+
+
+   return 0
+}
 
 go_hourly () {
 if [ -s $configdir/kid.list ]; then
         for I in `/bin/cat $configdir/kid.list | sort -u`; do
                 if [ -e $basedir/schedule/$I ]; then
                         [ -e $basedir/time/$I.ttl ] && C=`/bin/cat $basedir/time/$I.ttl`
-                        [ $C -le 0 ] && /usr/bin/passwd $I -l && exit 0
+# %%% if ttl has gone negative, we lock password file and exit????
+                        #[ $C -le 0 ] && /usr/bin/passwd $I -l && exit 0
+                        [ $C -le 0 ] && exit 0
                         [ "$WEEKEND" == "no" ] && R=`/bin/grep ^$HOUR $basedir/schedule/$I | /usr/bin/awk '{ print $2 }'`
                         [ "$WEEKEND" == "yes" ] && R=`/bin/grep ^$HOUR $basedir/schedule/$I | /usr/bin/awk '{ print $3 }'`
                         if [ "$R" == "y" ]; then
                                 /usr/bin/passwd $I -u
                         else
                                 /usr/bin/passwd $I -l
-                                /usr/bin/users | /bin/grep -q $I && /usr/local/bin/kidtimer shutdown $I
+
+# should gnome-screensaver-command -l
+
+                                # This method ( /usr/bin/users ) to determine who is logged in is a kludge.  It ignores locked screens (screensaver active) and switched user states.
+                                /usr/bin/users | /bin/grep -q $I
+                                if [ $? -eq 0 ]; then
+# %%% if this file exists, do no issue logout sequence
+                            if [ ! -e /tmp/kidtimer.shutdown.$I ]; then
+                                    go_logout $I
+                    fi
+                        fi
                         fi
                 fi
         done
@@ -137,14 +255,24 @@ fi
 
 
 go_logout () {
-K=$1
-go_send $K 5
-go_send $K 4
-go_send $K 3
-go_send $K 2
-go_send $K 1
-go_killall $K
-/usr/bin/touch /tmp/kidtimer.shutdown.$K
+   kid=$1
+
+   # only start this if they are logged in
+   /usr/bin/users | /bin/grep -q $kid
+    if [ $? -ne 0 ]; then
+	return
+    fi
+
+   # schedule the shutdown if we haven't already
+   if [ ! -e /tmp/kidtimer.shutdown.$kid ]; then
+      go_send $kid 5
+      go_send $kid 4
+      go_send $kid 3
+      go_send $kid 2
+      go_send $kid 1
+      go_killall $kid
+      /usr/bin/touch /tmp/kidtimer.shutdown.$kid
+   fi
 }
 
 
@@ -155,27 +283,53 @@ LINE=$((7-$T))
 TEXT=$((6-$T))
 TMPFILE="/tmp/kidtimer.send$T.bash.$K"
 /bin/rm -f $TMPFILE
+touch $TMPFILE
+chmod +x $TMPFILE
+
 echo "#!/bin/bash" > $TMPFILE
-D=`/usr/bin/who | grep $K | grep -m1 "(:" | cut -d\( -f2 | sed s/\)// | sed s/://`
+
+# This method to determine the correct display doesn't work, at least on zorin.
+# It only seems to detect a user who has an active shell running
+#D=`/usr/bin/who | grep $K | grep -m1 "(:" | cut -d\( -f2 | sed s/\)// | sed s/://`
+
+# So instead I'll just send the message to all the first 10 displays, and the ones owned by the correct user will show the message, the rest won't
 if [ -e $basedir/locale/$LANG ]; then
-	MSG=`/bin/sed -n "$LINE"p /usr/local/kidtimer/locale/$LANG`
+    MSG="$K: `/bin/sed -n "$LINE"p /usr/local/kidtimer/locale/$LANG`"
 else
-	MSG="Your computer time will end in $TEXT minutes."
+    MSG="$K's computer time will end in $TEXT minutes."
 fi
-echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/local/kidtimer/icons/kidtimer-$TEXT.png \
-	\"ALERT\" \"$MSG\"'" >> $TMPFILE
+
+for (( D = 0 ; D < 10 ; D = D + 1 )); do
+        echo "/bin/su $K -c 'DISPLAY=:$D /usr/bin/notify-send -i /usr/local/kidtimer/icons/kidtimer-$TEXT.png \
+    \"ALERT\" \"$MSG\"'" >> $TMPFILE
+done
+
 echo "/bin/rm -f $TMPFILE" >> $TMPFILE
 echo "/bin/bash $TMPFILE" | /usr/bin/at now + $T minutes
+# Note you need the file /var/spool/cron/atjobs/.SEQ owned by daemon:daemon for at to work properly!!!
 }
 
 
 go_killall () {
 K=$1
 /bin/rm -f /tmp/killall.bash.$K
+touch /tmp/killall.bash.$K
+chmod +x /tmp/killall.bash.$K
+#/usr/bin/passwd $K -l
+
 echo "#!/bin/bash" > /tmp/killall.bash.$K
-echo "/usr/bin/pkill -KILL -u $K" >> /tmp/killall.bash.$K
+# Not sure if it is better or worse to do a normal kill first...
+# Programs like Firefox will reopen all their previous tabs if it is killed with -KILL
+# But other programs would probably do better if given a chance to save state/data and clean up after themselves eg open office???
+#echo "/usr/bin/pkill -TERM -u $K" >> /tmp/killall.bash.$K
+#echo "/bin/sleep 5" >> /tmp/killall.bash.$K
+#
+# should do gnome-screensaver-command -l and passwd -l here
+# if user hibernates first and resumes, logic will continue up resumption
 echo "/bin/rm -rf /tmp/kidtimer.shutdown.$K" >> /tmp/killall.bash.$K
 echo "/bin/rm -f /tmp/killall.bash.$K" >> /tmp/killall.bash.$K
+#echo "/usr/bin/pkill -KILL -u $K" >> /tmp/killall.bash.$K
+echo "/usr/sbin/pm-hibernate" >> /tmp/killall.bash.$K
 echo "/bin/bash /tmp/killall.bash.$K" | /usr/bin/at now + 6 minutes
 }
 
@@ -189,54 +343,58 @@ go_echo_done () {
 echo "`/bin/sed -n '13p' /usr/local/kidtimer/locale/$LANG`"
 }
 
+reset_time () {
+KID=$1
 
-go_reset_time () {
-get_ttl_time $KID > $basedir/time/$KID.ttl
-/usr/bin/passwd $KID -u
-go_clean_jobs $KID
-go_echo_done
+# make sure this kid is in the list to begin with
+grep -q $KID $configdir/kid.list 
+if [ $? -eq 0 ]; then
+   get_ttl_time $KID > $basedir/time/$KID.ttl
+   /usr/bin/passwd $KID -u
+   go_clean_jobs $KID
+   go_echo_done
+fi
 }
-
 
 go_addtime () {
 U=$KID
 A=$Time
 grep -q $U $configdir/kid.list
-if [ $? -eq 0 ]; then 
-	if [ "$A" == "reset" ]; then
-		get_ttl_time $U > $basedir/time/$U.ttl
-        	go_echo_done
-        	exit 0
-	elif [ "$A" == "" ]; then
-	        go_echo_error
-		#english: Syntax: addtime <user> <minutes|reset>
-	        echo "`/bin/sed -n '22p' /usr/local/kidtimer/locale/$LANG`"
-	        exit 1
-	else        
-	        C=`/bin/cat $basedir/time/$KID.ttl`
-	        C=$((C + Time))
-	        echo $C > $basedir/time/$KID.ttl
-		get_time
-	fi
-	/usr/bin/passwd $KID -u
-	go_clean_jobs $KID
+if [ $? -eq 0 ]; then
+    if [ "$A" == "reset" ]; then
+        get_ttl_time $U > $basedir/time/$U.ttl
+            go_echo_done
+            exit 0
+    elif [ "$A" == "" ]; then
+            go_echo_error
+        #english: Syntax: addtime <user> <minutes|reset>
+            echo "`/bin/sed -n '22p' /usr/local/kidtimer/locale/$LANG`"
+            exit 1
+    else
+            C=`/bin/cat $basedir/time/$KID.ttl`
+            C=$((C + Time))
+            echo $C > $basedir/time/$KID.ttl
+        get_time
+    fi
+    /usr/bin/passwd $KID -u
+    go_clean_jobs $KID
 else
-	go_echo_error
-	#english: User not setup.
-	echo "`/bin/sed -n '19p' /usr/local/kidtimer/locale/$LANG`"
-	exit 1
+    go_echo_error
+    #english: User not setup.
+    echo "`/bin/sed -n '19p' /usr/local/kidtimer/locale/$LANG`"
+    exit 1
 fi
 }
 
 
 get_time () {
 if [ -e $basedir/time/$KID.ttl ]; then
-	cat $basedir/time/$KID.ttl
+    cat $basedir/time/$KID.ttl
 else
-	echo
-	#english: User not setup.
-	echo "`/bin/sed -n '19p' /usr/local/kidtimer/locale/$LANG`"
-	echo
+    echo
+    #english: User not setup.
+    echo "`/bin/sed -n '19p' /usr/local/kidtimer/locale/$LANG`"
+    echo
 fi
 }
 
@@ -278,9 +436,9 @@ echo "`/bin/sed -n '14p' /usr/local/kidtimer/locale/$LANG`"
 if [ -s $configdir/kid.list ]; then
         /bin/cat $configdir/kid.list
 else
-	#english: No configured users.
+    #english: No configured users.
         echo "`/bin/sed -n '15p' /usr/local/kidtimer/locale/$LANG`"
-	echo
+    echo
 fi
 }
 
@@ -291,26 +449,26 @@ echo -n "`/bin/sed -n '16p' /usr/local/kidtimer/locale/$LANG` "; read U
 /usr/bin/id $U > /dev/null 2>&1
 if [ $? -eq 0 ]; then
         /bin/cp $basedir/schedule/blank $basedir/schedule/$U
-	get_ttl_time $U > $basedir/time/$U.ttl
+    get_ttl_time $U > $basedir/time/$U.ttl
         echo $U >> $configdir/kid.list
         go_echo_done
         echo
-	#english: Modify limits now ?(y/n):
+    #english: Modify limits now ?(y/n):
         echo -n "`/bin/sed -n '17p' /usr/local/kidtimer/locale/$LANG`"; read M
         if [ "$M" == "y" ]; then
                 if [ -e /usr/bin/nano ]; then
-                	/usr/bin/nano $basedir/schedule/$U
-			get_ttl_time $U > $basedir/time/$U.ttl
-                 	go_echo_done
-         	else
-                	/usr/bin/vi $basedir/schedule/$U
-			get_ttl_time $U > $basedir/time/$U.ttl
-                	go_echo_done
+                    /usr/bin/nano $basedir/schedule/$U
+            get_ttl_time $U > $basedir/time/$U.ttl
+                    go_echo_done
+            else
+                    /usr/bin/vi $basedir/schedule/$U
+            get_ttl_time $U > $basedir/time/$U.ttl
+                    go_echo_done
                 fi
         fi
 else
-	go_echo_error
-	#english: User does not exist. Please create user using the useradd command first.
+    go_echo_error
+    #english: User does not exist. Please create user using the useradd command first.
         echo "`/bin/sed -n '18p' /usr/local/kidtimer/locale/$LANG`"
 fi
 }
@@ -330,10 +488,10 @@ if [ $? -eq 0 ]; then
                 go_echo_done
         fi
 else
-	go_echo_error
-	#english: User not setup.
+    go_echo_error
+    #english: User not setup.
         echo "`/bin/sed -n '19p' /usr/local/kidtimer/locale/$LANG`"
-	echo
+    echo
 fi
 }
 
@@ -348,10 +506,10 @@ if [ $? -eq 0 ]; then
         /bin/cat /tmp/kidtimer.tmp > $configdir/kid.list
         go_echo_done
 else
-	go_echo_error
-	#english: User not setup.
+    go_echo_error
+    #english: User not setup.
         echo "`/bin/sed -n '19p' /usr/local/kidtimer/locale/$LANG`"
-	echo
+    echo
 fi
 }
 
@@ -377,8 +535,8 @@ check_dependencies () {
 P1="";P2="";P3="";pstatus="0"
 /usr/bin/dpkg -s at >/dev/null 2>/dev/null
 if [ ! $? -eq 0 ]; then
-	P1="at"
-	pstatus=1
+    P1="at"
+    pstatus=1
 fi
 #libnotify-bin
 /usr/bin/dpkg -s libnotify-bin >/dev/null 2>/dev/null
@@ -393,26 +551,26 @@ if [ ! $? -eq 0 ]; then
         pstatus=1
 fi
 if [ "$pstatus" == "1" ]; then
-	echo
-	#english: Error. Missing package dependencies.
-	echo "`/bin/sed -n '20p' /usr/local/kidtimer/locale/$LANG`"
-	#english: Please install using the following line;
-	echo "`/bin/sed -n '21p' /usr/local/kidtimer/locale/$LANG`"
-	echo "sudo apt-get install "$P1" "$P2" "$P3
-	exit 1
+    echo
+    #english: Error. Missing package dependencies.
+    echo "`/bin/sed -n '20p' /usr/local/kidtimer/locale/$LANG`"
+    #english: Please install using the following line;
+    echo "`/bin/sed -n '21p' /usr/local/kidtimer/locale/$LANG`"
+    echo "sudo apt-get install "$P1" "$P2" "$P3
+    exit 1
 fi
 }
 
 get_update () {
 URL='https://github.com/grover66/kidtimer/raw/master/DEBS/kidtimer_latest.deb'
 if [ -e /usr/bin/wget ]; then
-	/usr/bin/wget "$URL" -qO /tmp/kidtimer_latest.deb
-	/usr/bin/dpkg -i /tmp/kidtimer_latest.deb
-	/bin/rm -f /tmp/kidtimer_latest.deb
+    /usr/bin/wget "$URL" -qO /tmp/kidtimer_latest.deb
+    /usr/bin/dpkg -i /tmp/kidtimer_latest.deb
+    /bin/rm -f /tmp/kidtimer_latest.deb
 else
-	echo
-	echo "Error. Requires wget"
-	echo "To install wget; sudo apt-get install wget"
+    echo
+    echo "Error. Requires wget"
+    echo "To install wget; sudo apt-get install wget"
 fi
 }
 
@@ -421,14 +579,14 @@ fi
 ################################################
 
 if [ $TUI -eq 1 ]; then
-	check_dependencies
-	go_tui
+    check_dependencies
+    go_tui
 fi
 
 case "$COMMAND" in
 addtime) go_addtime
         ;;
-reset) go_reset_time
+reset) reset_time $KID
         ;;
 gettime) get_time
         ;;
