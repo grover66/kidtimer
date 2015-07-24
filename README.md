@@ -4,13 +4,11 @@ Operation: This runs from cron every minute to decrement the number of minutes y
 
 Modified to do the following.
 
-1) check every minute instead of hourly, daily, etc.  Change the logic to
-   handle this in one place.  Thus all we need is a single crontab entry that
-   does a kidtimer check
+1) changed so that we issue a pm-hibernate instead of killing the session. The kill proved to destroy her work which seemed unfair.
 
-2) changed so that we issue a pm-hibernate instead of killing the session. The kill proved to destroy her work which seemed unfair.
+2) check every minute instead of hourly, daily, minute, etc to make this more robust.  Change the logic to handle this in one place.  Thus all we need is a single crontab entry that does a kidtimer check. Found there were a few places that allowed her to get more time once we moved to the hibernate model from kill.
 
-3) added the ability to provide a file that can provide more time.  My daughter comes to me and I issue her a key that she then thens uses by issuing a: touch /tmp/key to get more time... When kidtimer see's that file, it will issue a 'reset' and provide her another session.
+3) added the ability to provide a file that can provide more time.  My daughter comes to me and I issue her a key that she then uses by issuing a: touch /tmp/key to get more time... When kidtimer see's that file, it will issue a 'reset' and provide her another session.
 
 The key can be created with the generate_key.sh command located in sbin
 
