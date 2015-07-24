@@ -10,11 +10,12 @@ Modified to do the following.
 
 2) changed so that we issue a pm-hibernate instead of killing the session. The kill proved to destroy her work which seemed unfair.
 
-3) added the ability to provide a file that can provide more time.  My dauther comes to me and I issue her a key that she then creates as:  touch /tmp/key ... When kidtimer see's that file, it will issue a 'reset'.
+3) added the ability to provide a file that can provide more time.  My daughter comes to me and I issue her a key that she then thens uses by issuing a: touch /tmp/key to get more time... When kidtimer see's that file, it will issue a 'reset' and provide her another session.
 
-The key can be created with the generate_key.sh command
+The key can be created with the generate_key.sh command located in sbin
 
-Please notify me should you find bugs as the original author is most likely not responsible for them. I have left or not fixed code I don't plan on using since we don't have as many ways to use the program as the original author.. ie. kidtimer check is all we do.
+Please notify me should you find bugs as the original author is not responsible for my errors. I have left or not fixed some of the code as it currently isn't used by us .. ie. kidtimer check is all we do.
+
 
 ----------- Original text below from grover66.
 
