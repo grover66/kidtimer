@@ -14,7 +14,9 @@ Modified to do the following.
 
 The key can be created with the generate_key.sh command
 
------------ Original text below
+Please notify me should you find bugs as the original author is most likely not responsible for them. I have left or not fixed code I don't plan on using since we don't have as many ways to use the program as the original author.. ie. kidtimer check is all we do.
+
+----------- Original text below from grover66.
 
 I have been looking for a solution to this for a long time. I have two kids and wish to restrict their time on the computers. Since nothing else seems to work out there, I decided to write my own. I call it kidtimer. Very original, I know. :)
 
