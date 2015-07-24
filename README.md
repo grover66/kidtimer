@@ -1,3 +1,16 @@
+Modified to do the following.
+
+1) check every minute instead of hourly, daily, etc.  Change the logic to
+   handle this in one place.  Thus all we need is a single crontab entry that
+   does a kidtimer check
+
+2) changed so that we issue a pm-hibernate instead of killing the session. That proved to destroy work with the kill which seemed unfair.
+
+3) added the ability to provide a file that can provide more time.  My dauther comes to me and Issue a key that she then creates as:  touch /tmp/key ... When kidtimer see's that file, it will issue a 'reset'.
+
+
+----------- Original text below
+
 I have been looking for a solution to this for a long time. I have two kids and wish to restrict their time on the computers. Since nothing else seems to work out there, I decided to write my own. I call it kidtimer. Very original, I know. :)
 
 Kidtimer should work on any recent version of Ubuntu, both 32 & 64 bit. Should also work on Debian too. It uses standard Linux utilities and notify-send (for user notification).
