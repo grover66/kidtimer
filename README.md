@@ -4,10 +4,18 @@ Modified to do the following.
    handle this in one place.  Thus all we need is a single crontab entry that
    does a kidtimer check
 
-2) changed so that we issue a pm-hibernate instead of killing the session. That proved to destroy work with the kill which seemed unfair.
+2) changed so that we issue a pm-hibernate instead of killing the session. The kill proved to destroy her work which seemed unfair.
 
-3) added the ability to provide a file that can provide more time.  My dauther comes to me and Issue a key that she then creates as:  touch /tmp/key ... When kidtimer see's that file, it will issue a 'reset'.
+3) added the ability to provide a file that can provide more time.  My dauther comes to me and I issue her a key that she then creates as:  touch /tmp/key ... When kidtimer see's that file, it will issue a 'reset'.
 
+The key can be created as: 
+
+#!/bin/bash
+# Generate key to give to Samantha for more time
+
+time=`date +%s`
+file=$(expr $time / 10000)
+echo $file
 
 ----------- Original text below
 
