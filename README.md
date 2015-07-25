@@ -1,6 +1,8 @@
 Kidtimer
 
-Operation: This runs from cron every minute to decrement the number of minutes your child has been using their computer.  If your child has spent more time on their computer then you have allowed, it will queue up 5 warning messages and a hibernate via the 'at' command.  As 'at' executes these commands, it will show a message on the users window and count down the number of minutes before issuing the hibernate. The child can watch via... kidtimer gettime user or watch the /tmp directory.  I find my 10 year old likes to issue commands from the shell as it seems more "hacker like"... I have provided her with a print out and told her that she could defeat it if she looks hard enough. I will fix these as she discovers them... currently it is fairly easy to defeat which makes it more intersting for her from my perspective as a teaching aid.
+Purpose: Set limits on computer time per day
+
+Operation: This shell script runs from cron every minute to decrement the number of minutes your child has been using their computer.  If your child has spent more time on their computer then you have allowed, it will queue up 5 warning messages and a hibernate via the 'at' command.  As 'at' executes these commands, it will show a message on the users window and count down the number of minutes before issuing the hibernate. The child can watch via... kidtimer gettime user or watch the /tmp directory.  I find my 10 year old likes to issue commands from the shell as it seems more "hacker like"... I have provided her with a print out and told her that she could defeat it if she looks hard enough. I will fix these as she discovers them... currently it is fairly easy to defeat which makes it more intersting for her from my perspective as a teaching aid.
 
 Modified to do the following.
 
