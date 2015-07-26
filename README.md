@@ -1,8 +1,10 @@
-Kidtimer
+# Kidtimer
 
-Purpose: Set limits on computer time per day
+# Purpose: 
+Set limits on computer time per day
 
-Operation: This shell script runs from cron every minute to decrement the number of minutes your child has been using their computer.  If your child has spent more time on their computer then you have allowed, it will queue up 5 warning messages and a hibernate via the 'at' command.  As 'at' executes these commands, it will show a message on the users window and count down the number of minutes before issuing the hibernate. The child can watch via... kidtimer gettime user or watch the /tmp directory.  I find my 10 year old likes to issue commands from the shell as it seems more "hacker like"... I have provided her with a print out and told her that she could defeat it if she looks hard enough. I will fix these as she discovers them... currently it is fairly easy to defeat which makes it more intersting for her from my perspective as a teaching aid.
+# Operation: 
+This shell script runs from cron every minute to decrement the number of minutes your child has been using their computer.  If your child has spent more time on their computer then you have allowed, it will queue up 5 warning messages and a hibernate via the 'at' command.  As 'at' executes these commands, it will show a message on the users window and count down the number of minutes before issuing the hibernate. The child can watch via... kidtimer gettime user or watch the /tmp directory.  I find my 10 year old likes to issue commands from the shell as it seems more "hacker like"... I have provided her with a print out and told her that she could defeat it if she looks hard enough. I will fix these as she discovers them... currently it is fairly easy to defeat which makes it more intersting for her from my perspective as a teaching aid.
 
 Modified to do the following.
 
@@ -12,12 +14,15 @@ Modified to do the following.
 
 3) added the ability to provide a file that can provide more time.  My daughter comes to me and I issue her a key that she then uses by issuing a: touch /tmp/key to get more time... When kidtimer see's that file, it will issue a 'reset' and provide her another session.
 
-The key can be created with the generate_key.sh command located in sbin
+The key can be created with command
+... 
+generate_key.sh 
+...
 
 Please notify me should you find bugs as the original author is not responsible for my errors. I have left or not fixed some of the code as it currently isn't used by us .. ie. kidtimer check is all we do.
 
 
------------ Original text below from grover66.
+# Original text below from grover66.
 
 I have been looking for a solution to this for a long time. I have two kids and wish to restrict their time on the computers. Since nothing else seems to work out there, I decided to write my own. I call it kidtimer. Very original, I know. :)
 
