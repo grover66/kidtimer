@@ -15,9 +15,9 @@ Modified to do the following.
 3) added the ability to provide a file that can provide more time.  My daughter comes to me and I issue her a key that she then uses by issuing a: touch /tmp/key to get more time... When kidtimer see's that file, it will issue a 'reset' and provide her another session.
 
 The key can be created with command
-... 
+<pre>
 generate_key.sh 
-...
+</pre>
 
 Please notify me should you find bugs as the original author is not responsible for my errors. I have left or not fixed some of the code as it currently isn't used by us .. ie. kidtimer check is all we do.
 
