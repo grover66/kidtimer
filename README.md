@@ -1,3 +1,6 @@
+NOTE: Since my kids have grown up... I have not been keeping this software updated. Please goto https://github.com/JimDunphy/kidtimer for the latest code and new features. Great work Jim!!!
+
+
 I have been looking for a solution to this for a long time. I have two kids and wish to restrict their time on the computers. Since nothing else seems to work out there, I decided to write my own. I call it kidtimer. Very original, I know. :)
 
 Kidtimer should work on any recent version of Ubuntu, both 32 & 64 bit. Should also work on Debian too. It uses standard Linux utilities and notify-send (for user notification).
