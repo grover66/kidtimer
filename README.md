@@ -1,4 +1,4 @@
-### NOTE: ### 
+### NOTE:
 Since my kids have grown up... I have not been keeping this software updated. Please goto https://github.com/JimDunphy/kidtimer for the latest code and new features. Great work Jim!!!
 
 
