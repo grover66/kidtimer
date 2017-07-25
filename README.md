@@ -15,9 +15,34 @@ Modified to do the following.
 3) added the ability to provide a file that can provide more time.  My daughter comes to me and I issue her a key that she then uses by issuing a: touch /tmp/key to get more time... When kidtimer see's that file, it will issue a 'reset' and provide her another session.
 
 The key can be created with command
-<pre>
-generate_key.sh 
-</pre>
+```bash
+% generate_key.sh 
+```bash
+
+Here is how we use it. We check every minute given we use suspend.
+```bash
+% cat /etc/cron.d/kidtimer
+* * * * *                root        /usr/local/bin/kidtimer check
+```bash
+
+I liked to view when she brought the machine up or down and tracked that via this method:
+
+```bash
+cat /etc/pm/sleep.d/0_jad
+
+#!/bin/bash
+
+case "$1" in
+suspend|hibernate)
+    /usr/bin/logger -n swlogger.example.com -p auth.info NETWORK Samy off
+    ;;
+resume|thaw)
+    /usr/bin/logger -n swlogger.example.com -p auth.info NETWORK Samy on
+    ;;
+esac
+```bash
+
+Where swlogger.example.com was a syslog server that is running swatch. You can substitute logger with mail, texing, etc. 
 
 Please notify me should you find bugs as the original author is not responsible for my errors. I have left or not fixed some of the code as it currently isn't used by us .. ie. kidtimer check is all we do.
 
