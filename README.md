@@ -17,18 +17,18 @@ Modified to do the following.
 The key can be created with command
 ```bash
 % generate_key.sh 
-```bash
+```
 
 Here is how we use it. We check every minute given we use suspend.
 ```bash
 % cat /etc/cron.d/kidtimer
 * * * * *                root        /usr/local/bin/kidtimer check
-```bash
+```
 
 I liked to view when she brought the machine up or down and tracked that via this method:
 
 ```bash
-cat /etc/pm/sleep.d/0_jad
+% cat /etc/pm/sleep.d/0_jad
 
 #!/bin/bash
 
@@ -40,7 +40,7 @@ resume|thaw)
     /usr/bin/logger -n swlogger.example.com -p auth.info NETWORK Samy on
     ;;
 esac
-```bash
+```
 
 Where swlogger.example.com was a syslog server that is running swatch. You can substitute logger with mail, texing, etc. 
 
