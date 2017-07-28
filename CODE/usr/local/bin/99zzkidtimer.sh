@@ -7,6 +7,6 @@
 
 case $1 in
     resume|thaw)
-        /usr/local/bin/kidtimer hourly
+        /usr/local/bin/kidtimer check
         ;;
 esac
