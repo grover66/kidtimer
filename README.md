@@ -46,6 +46,9 @@ Where swlogger.example.com was a syslog server that is running swatch. You can s
 
 Please notify me should you find bugs as the original author is not responsible for my errors. I have left or not fixed some of the code as it currently isn't used by us .. ie. kidtimer check is all we do.
 
+# NOTE:
+I have not rebuilt the DEB package version of kidtimer. The version listed here is the latest working version. You can copy it into place. No other options are required via cron... just kidtimer check which should run every minute as shown above.
+
 
 # Original text below from grover66.
 
